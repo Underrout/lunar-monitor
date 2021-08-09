@@ -39,17 +39,9 @@
 
 #define WIN32_LEAN_AND_MEAN        // Exclude rarely-used stuff from Windows headers
 
-#define MAX_LOADSTRING 100
-#define SZ_TITLE "MinWinApp"
-#define SZ_WND_CLASS L"MINWINAPP"
+#define SZ_WND_CLASS L"MONITOR"
 
 #define FULL_ROM_PATH DIRECTORY_TO_WATCH ROM_NAME_TO_WATCH
-
-
-// Global Variables:
-HINSTANCE g_hInst;                // current instance
-HWND g_hWnd;
-HWND g_hwndNextViewer;
 
 unsigned int lvlNum{ 0x105 };
 std::time_t previousLastModifiedTime = NULL;
@@ -86,28 +78,27 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 
     wcex.cbSize = sizeof(WNDCLASSEX);
 
-    wcex.style = CS_HREDRAW | CS_VREDRAW;
+    wcex.style = NULL;
     wcex.lpfnWndProc = WndProc;
     wcex.cbClsExtra = 0;
     wcex.cbWndExtra = 0;
     wcex.hInstance = hInstance;
     wcex.hIcon = NULL;
-    wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
-    wcex.hbrBackground = (HBRUSH)(COLOR_BTNFACE + 1);
+    wcex.hCursor = NULL;
+    wcex.hbrBackground = NULL;
     wcex.lpszMenuName = NULL;
     wcex.lpszClassName = szWndClass;
     wcex.hIconSm = NULL;
     RegisterClassEx(&wcex);
 
-    g_hInst = hInstance; // Store instance handle in our global variable
-    g_hWnd = CreateWindowExW(0, szWndClass, szWndClass, 0, 0, 0, 0, 0, 0, 0, hInstance, 0);
+    auto window = CreateWindowExW(0, szWndClass, szWndClass, 0, 0, 0, 0, 0, 0, 0, hInstance, 0);
 
-    if (!g_hWnd)
+    if (!window)
     {
-        return FALSE;
+        return 1;
     }
 
-    ShowWindow(g_hWnd, SW_HIDE);
+    ShowWindow(window, SW_HIDE);
 
     HANDLE romChangeHandle = FindFirstChangeNotification(
         TEXT(DIRECTORY_TO_WATCH), false, FILE_NOTIFY_CHANGE_LAST_WRITE
