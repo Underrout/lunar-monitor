@@ -45,16 +45,19 @@ HINSTANCE g_hInst;                // current instance
 HWND g_hWnd;
 HWND g_hwndNextViewer;
 
+unsigned int lvlNum{ 0x105 };
+
 LPCWSTR szWndClass = SZ_WND_CLASS;
-
-
-LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
 #ifdef DEBUG
 bool RedirectConsoleIO();
 bool CreateNewConsole(int16_t minLength);
 void AdjustConsoleBuffer(int16_t minLength);
 #endif
+
+LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
+
+void handlePotentialROMChange();
 
 int APIENTRY _tWinMain(HINSTANCE hInstance,
     HINSTANCE hPrevInstance,
@@ -97,14 +100,31 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 
     ShowWindow(g_hWnd, SW_HIDE);
 
-    // Main message loop:
-    while (GetMessage(&msg, NULL, 0, 0))
-    {
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
-    }
+    HANDLE romChangeHandle = FindFirstChangeNotification(
+        L".", false, FILE_NOTIFY_CHANGE_LAST_WRITE
+    );
 
-    return (int)msg.wParam;
+    while (true)
+    {
+        DWORD result = WaitForSingleObject(romChangeHandle, 50);
+
+        if (result == WAIT_OBJECT_0) 
+        {
+#ifdef DEBUG
+            std::cout << "Change in ROM dir detected" << std::endl;
+#endif
+            handlePotentialROMChange();
+        }
+
+        FindNextChangeNotification(romChangeHandle);
+
+        BOOL msgAvailable = PeekMessage(&msg, NULL, 0xBECA, 0xBECA, PM_REMOVE);
+        if (msgAvailable)
+        {
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+        }
+    }
 }
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -119,25 +139,22 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         PostQuitMessage(0);
         break;
     default:
-#ifdef DEBUG
-        if (message == 0xBECA)
+        if (lParam >> 16 == 0x6942)
         {
-            if (lParam >> 16 == 0x6942)
-            {
-                if ((lParam & 0x3F) == 0)
-                {
-                    std::cout << "LM opened new ROM" << std::endl;
-                }
-                else
-                {
-                    std::cout << "LM now in level " << std::hex << ((lParam >> 6) & 0x3FF) << std::endl;
-                }
-            }
-        }
+            unsigned int newLvlNum = ((lParam >> 6) & 0x3FF);
+#ifdef DEBUG
+            std::cout << "LM now in level " << std::hex << newLvlNum << std::endl;
 #endif
+            lvlNum = newLvlNum;
+        }
         return DefWindowProc(hWnd, message, wParam, lParam);
     }
     return 0;
+}
+
+void handlePotentialROMChange()
+{
+
 }
 
 #ifdef DEBUG
