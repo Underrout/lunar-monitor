@@ -1,8 +1,11 @@
 // lunar-monitor-prototype-window.cpp : Defines the entry point for the application.
 //
 
-#define DIRECTORY_TO_WATCH "./"
+#define DIRECTORY_TO_WATCH ".\\"
 #define ROM_NAME_TO_WATCH "c.smc"
+#define LEVEL_DIRECTORY ".\\levels\\"
+#define LUNAR_MAGIC_PATH ".\\lunar_magic.exe"
+#define MWL_FILE_PREFIX "level "
 
 #define DEBUG
 
@@ -24,10 +27,12 @@
 #include <iostream>
 #include <fstream>
 #include <cstdio>
+#include <sstream>
 
 #ifndef WINVER                // Allow use of features specific to Windows XP or later.
 #define WINVER 0x0501        // Change this to the appropriate value to target other versions of Windows.
 #endif
+#include <vector>
 
 #ifndef _WIN32_WINNT        // Allow use of features specific to Windows XP or later.                  
 #define _WIN32_WINNT 0x0501    // Change this to the appropriate value to target other versions of Windows.
@@ -145,13 +150,74 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         {
             unsigned int newLvlNum = ((lParam >> 6) & 0x3FF);
 #ifdef DEBUG
-            std::cout << "LM now in level " << std::hex << newLvlNum << std::endl;
+            std::cout << "LM now in level " << std::hex << std::uppercase << newLvlNum << std::endl;
 #endif
             lvlNum = newLvlNum;
         }
         return DefWindowProc(hWnd, message, wParam, lParam);
     }
     return 0;
+}
+
+bool exportCurrLvl()
+{
+#ifdef DEBUG
+    std::cout << "Attempting to export level " << std::hex << std::uppercase << lvlNum << std::endl;
+#endif
+
+    std::wstringstream ws;
+
+    ws << " -ExportLevel \"" << FULL_ROM_PATH << "\" \"" 
+        << LEVEL_DIRECTORY MWL_FILE_PREFIX << std::hex << std::uppercase << lvlNum << std::nouppercase << ".mwl\" " << lvlNum;
+
+#ifdef DEBUG
+    std::wcout << "Command:\n" << LUNAR_MAGIC_PATH << " " << ws.str() << std::endl;
+#endif
+
+    std::wstring command = ws.str();
+    std::vector<wchar_t> buf(command.begin(), command.end());
+    buf.push_back(0);
+
+    STARTUPINFO si;
+    PROCESS_INFORMATION pi;
+
+    ZeroMemory(&si, sizeof(si));
+    si.cb = sizeof(si);
+    ZeroMemory(&pi, sizeof(pi));
+
+    if (!CreateProcess(TEXT(LUNAR_MAGIC_PATH), buf.data(), NULL, NULL, false, 0, NULL, NULL, &si, &pi))
+    {
+#ifdef DEBUG
+        std::cerr << "Creating level export process failed: " << GetLastError() << std::endl;
+#endif // DEBUG
+        return false;
+    }
+
+    WaitForSingleObject(pi.hProcess, INFINITE);
+
+    DWORD exitCode;
+
+    GetExitCodeProcess(pi.hProcess, &exitCode);
+
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
+
+#ifdef DEBUG
+    if (exitCode == 0)
+    {
+        std::cout << "Successfully exported level " << std::hex << lvlNum << " as "
+            << LEVEL_DIRECTORY MWL_FILE_PREFIX << std::hex << std::uppercase << lvlNum << std::nouppercase << ".mwl" << std::endl;
+        return true;
+    }
+    else
+    {
+
+        std::cerr << "Level export failed!" << std::endl;
+        return false;
+    }
+#else
+    return exitCode;
+#endif
 }
 
 std::time_t getLastModifiedTime(const std::string romPath)
@@ -198,6 +264,20 @@ void handlePotentialROMChange(const std::string romPath, std::time_t& previousLa
 #ifdef DEBUG
     std::wcout << "Foreground window title on ROM change was: " << windowTitle << std::endl;
 #endif
+
+    if (windowTitle.find(L"Lunar Magic") != std::string::npos)
+    {
+#ifdef DEBUG
+        std::cout << "Foreground window was main level editor, user likely just saved a level, attempting to export it now" << std::endl;
+#endif
+        exportCurrLvl();
+    }
+    else
+    {
+#ifdef DEBUG
+        std::wcout << "There is currently no action defined when the foreground window during a ROM write is " << windowTitle << ", ignoring write" << std::endl;
+#endif
+    }
 }
 
 #ifdef DEBUG
