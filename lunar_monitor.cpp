@@ -1,11 +1,15 @@
 // lunar-monitor-prototype-window.cpp : Defines the entry point for the application.
 //
 
+#define DIRECTORY_TO_WATCH "./"
+#define ROM_NAME_TO_WATCH "c.smc"
+
 #define DEBUG
 
 #include "framework.h"
 
 #include <windows.h>
+#include <shellapi.h>
 
 // C RunTime Header Files
 #include <stdlib.h>
@@ -39,6 +43,8 @@
 #define SZ_TITLE "MinWinApp"
 #define SZ_WND_CLASS L"MINWINAPP"
 
+#define FULL_ROM_PATH DIRECTORY_TO_WATCH ROM_NAME_TO_WATCH
+
 
 // Global Variables:
 HINSTANCE g_hInst;                // current instance
@@ -46,6 +52,7 @@ HWND g_hWnd;
 HWND g_hwndNextViewer;
 
 unsigned int lvlNum{ 0x105 };
+std::time_t previousLastModifiedTime = NULL;
 
 LPCWSTR szWndClass = SZ_WND_CLASS;
 
@@ -57,7 +64,9 @@ void AdjustConsoleBuffer(int16_t minLength);
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
-void handlePotentialROMChange();
+std::time_t getLastModifiedTime(const std::string romPath);
+bool romWasModified(const std::string romPath, std::time_t& previousLastChangedTime);
+void handlePotentialROMChange(const std::string romPath, std::time_t& previousLastChangedTime);
 
 int APIENTRY _tWinMain(HINSTANCE hInstance,
     HINSTANCE hPrevInstance,
@@ -101,19 +110,21 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
     ShowWindow(g_hWnd, SW_HIDE);
 
     HANDLE romChangeHandle = FindFirstChangeNotification(
-        L".", false, FILE_NOTIFY_CHANGE_LAST_WRITE
+        TEXT(DIRECTORY_TO_WATCH), false, FILE_NOTIFY_CHANGE_LAST_WRITE
     );
+
+    previousLastModifiedTime = getLastModifiedTime(FULL_ROM_PATH);
 
     while (true)
     {
-        DWORD result = WaitForSingleObject(romChangeHandle, 50);
+        DWORD result = WaitForSingleObject(romChangeHandle, 20);
 
         if (result == WAIT_OBJECT_0) 
         {
 #ifdef DEBUG
             std::cout << "Change in ROM dir detected" << std::endl;
 #endif
-            handlePotentialROMChange();
+            handlePotentialROMChange(FULL_ROM_PATH, previousLastModifiedTime);
         }
 
         FindNextChangeNotification(romChangeHandle);
@@ -152,9 +163,50 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     return 0;
 }
 
-void handlePotentialROMChange()
+std::time_t getLastModifiedTime(const std::string romPath)
 {
+    struct _stat result;
+    _stat(romPath.c_str(), &result);
 
+    return result.st_mtime;
+}
+
+bool romWasModified(const std::string romPath, std::time_t& previousLastChangedTime)
+{
+    std::time_t newLastChangedTime = getLastModifiedTime(romPath);
+
+    if (newLastChangedTime == previousLastChangedTime)
+        return false;
+
+#ifdef DEBUG
+    std::cout << "Last modified time has changed from " << previousLastChangedTime << " to " << newLastChangedTime << std::endl;
+#endif
+
+    previousLastChangedTime = newLastChangedTime;
+    return true;
+}
+
+void handlePotentialROMChange(const std::string romPath, std::time_t& previousLastChangedTime)
+{
+    if (!romWasModified(romPath, previousLastChangedTime))
+    {
+#ifdef DEBUG
+        std::cout << "Change in directory was not on ROM" << std::endl;
+#endif
+        return;
+    }
+
+#ifdef DEBUG
+    std::cout << "ROM modification detected" << std::endl;
+#endif
+
+    HWND foregroundWindowHandle = GetForegroundWindow();
+    std::wstring windowTitle(GetWindowTextLength(foregroundWindowHandle) + 1, L'\0');
+    GetWindowText(foregroundWindowHandle, &windowTitle[0], windowTitle.size());
+
+#ifdef DEBUG
+    std::wcout << "Foreground window title on ROM change was: " << windowTitle << std::endl;
+#endif
 }
 
 #ifdef DEBUG
