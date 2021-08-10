@@ -28,11 +28,15 @@
 #include <fstream>
 #include <cstdio>
 #include <sstream>
+#include <vector>
+
+#ifdef DEBUG
+#include <cassert>
+#endif
 
 #ifndef WINVER                // Allow use of features specific to Windows XP or later.
 #define WINVER 0x0501        // Change this to the appropriate value to target other versions of Windows.
 #endif
-#include <vector>
 
 #ifndef _WIN32_WINNT        // Allow use of features specific to Windows XP or later.                  
 #define _WIN32_WINNT 0x0501    // Change this to the appropriate value to target other versions of Windows.
@@ -49,7 +53,6 @@
 #define FULL_ROM_PATH DIRECTORY_TO_WATCH ROM_NAME_TO_WATCH
 
 unsigned int lvlNum{ 0x105 };
-std::time_t previousLastModifiedTime = NULL;
 
 LPCWSTR szWndClass = SZ_WND_CLASS;
 
@@ -61,9 +64,10 @@ void AdjustConsoleBuffer(int16_t minLength);
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
+bool exportLvl(unsigned int lvlNum);
 std::time_t getLastModifiedTime(const std::string romPath);
 bool romWasModified(const std::string romPath, std::time_t& previousLastChangedTime);
-void handlePotentialROMChange(const std::string romPath, std::time_t& previousLastChangedTime);
+void handlePotentialROMChange(const std::string romPath, unsigned int lvlNum, std::time_t& previousLastChangedTime);
 
 int APIENTRY _tWinMain(HINSTANCE hInstance,
     HINSTANCE hPrevInstance,
@@ -109,7 +113,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
         TEXT(DIRECTORY_TO_WATCH), false, FILE_NOTIFY_CHANGE_LAST_WRITE
     );
 
-    previousLastModifiedTime = getLastModifiedTime(FULL_ROM_PATH);
+    std::time_t previousLastModifiedTime = getLastModifiedTime(FULL_ROM_PATH);
 
     while (true)
     {
@@ -120,7 +124,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 #ifdef DEBUG
             std::cout << "Change in ROM dir detected" << std::endl;
 #endif
-            handlePotentialROMChange(FULL_ROM_PATH, previousLastModifiedTime);
+            handlePotentialROMChange(FULL_ROM_PATH, lvlNum, previousLastModifiedTime);
         }
 
         FindNextChangeNotification(romChangeHandle);
@@ -159,8 +163,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     return 0;
 }
 
-bool exportCurrLvl()
+bool exportLvl(unsigned int lvlNum)
 {
+#ifdef DEBUG
+    assert(lvlNum <= 0x1FF);
+#endif
+
 #ifdef DEBUG
     std::cout << "Attempting to export level " << std::hex << std::uppercase << lvlNum << std::endl;
 #endif
@@ -189,7 +197,7 @@ bool exportCurrLvl()
     {
 #ifdef DEBUG
         std::cerr << "Creating level export process failed: " << GetLastError() << std::endl;
-#endif // DEBUG
+#endif
         return false;
     }
 
@@ -243,7 +251,7 @@ bool romWasModified(const std::string romPath, std::time_t& previousLastChangedT
     return true;
 }
 
-void handlePotentialROMChange(const std::string romPath, std::time_t& previousLastChangedTime)
+void handlePotentialROMChange(const std::string romPath, unsigned int currLvlNum, std::time_t& previousLastChangedTime)
 {
     if (!romWasModified(romPath, previousLastChangedTime))
     {
@@ -270,7 +278,7 @@ void handlePotentialROMChange(const std::string romPath, std::time_t& previousLa
 #ifdef DEBUG
         std::cout << "Foreground window was main level editor, user likely just saved a level, attempting to export it now" << std::endl;
 #endif
-        exportCurrLvl();
+        exportLvl(currLvlNum);
     }
     else
     {
