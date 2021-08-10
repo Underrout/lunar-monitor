@@ -1,0 +1,12 @@
+-- Path to ROM that should be monitored for changes
+rom_path: "C:/Users/BobbyDook/Hack/HackRom.smc"
+
+-- Relative path to directory saved levels should be exported to
+level_directory: "levels"
+
+-- Relative path to the Lunar Magic executable that should be used to export data
+lunar_magic_path: "lunar_magic.exe"
+
+-- Format of exported mwl file names, # will be replaced with the 
+-- level number if it's present in the string
+mwl_file_format: "level #.mwl"
