@@ -4,8 +4,6 @@
 #define CONFIG_FILE_NAME "lunar_monitor_config.txt"
 #define SUSPEND_MONITORING_MARKER_FILE ".suspend_lunar_monitor"
 
-#define DEBUG
-
 #include "framework.h"
 
 #include <windows.h>
@@ -236,8 +234,10 @@ std::map<const std::string, const std::string> getConfig(const fs::path& configF
             config.insert(std::pair<const std::string, const std::string>(val, fixPath(var)));
         else if (val == "mwl_file_format")
             config.insert(std::pair<const std::string, const std::string>(val, var));
+#ifdef DEBUG
         else
             assert(false);  // Will only happen if a new config variable is added
+#endif
     }
 
     config.insert(std::pair<const std::string, const std::string>("directory_to_watch", basePath.string()));
