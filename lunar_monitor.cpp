@@ -2,6 +2,7 @@
 //
 
 #define CONFIG_FILE_NAME "lunar_monitor_config.txt"
+#define SUSPEND_MONITORING_MARKER_FILE ".suspend_lunar_monitor"
 
 #define DEBUG
 
@@ -17,6 +18,8 @@
 #include <tchar.h>
 #include <strsafe.h>
 
+#include <chrono>
+#include <thread>
 #include <stdio.h>
 #include <io.h>
 #include <fcntl.h>
@@ -66,6 +69,7 @@ void AdjustConsoleBuffer(int16_t minLength);
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
+bool markerFilePresent();
 std::wstring strToWstr(const std::string& s);
 std::map<const std::string, const std::string> getConfig(const fs::path& configFilePath);
 std::map<const std::string, const std::string> parseConfigFile(const fs::path& configFilePath);
@@ -146,7 +150,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
     {
         DWORD result = WaitForSingleObject(romChangeHandle, 20);
 
-        if (result == WAIT_OBJECT_0) 
+        if (result == WAIT_OBJECT_0)
         {
 #ifdef DEBUG
             std::cout << "Change in ROM dir detected" << std::endl;
@@ -190,6 +194,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     return 0;
 }
 
+bool markerFilePresent()
+{
+    fs::path markerPath = config.at("suspend_monitoring_marker_path");
+    return fs::exists(markerPath);
+}
+
 std::wstring strToWstr(const std::string& s)
 {
     std::wstring stemp = std::wstring(s.begin(), s.end());
@@ -231,6 +241,11 @@ std::map<const std::string, const std::string> getConfig(const fs::path& configF
     }
 
     config.insert(std::pair<const std::string, const std::string>("directory_to_watch", basePath.string()));
+
+    fs::path suspendMarkerFilePath = basePath;
+    suspendMarkerFilePath /= SUSPEND_MONITORING_MARKER_FILE;
+
+    config.insert(std::pair<const std::string, const std::string>("suspend_monitoring_marker_path", suspendMarkerFilePath.string()));
 
 #ifdef DEBUG
     std::cout << "Loaded config: " << std::endl;
@@ -419,6 +434,14 @@ void handlePotentialROMChange(const std::string romPath, unsigned int currLvlNum
 #ifdef DEBUG
     std::cout << "ROM modification detected" << std::endl;
 #endif
+
+    if (markerFilePresent())
+    {
+#ifdef DEBUG
+        std::cout << "Monitor suspension marker file present at " << config.at("suspend_monitoring_marker_path") << ", ROM modification ignored" << std::endl;
+#endif
+        return;
+    }
 
     HWND foregroundWindowHandle = GetForegroundWindow();
     std::wstring windowTitle(GetWindowTextLength(foregroundWindowHandle) + 1, L'\0');
