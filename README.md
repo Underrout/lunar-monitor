@@ -2,6 +2,8 @@
 
 Allows for automatic exporting of resources (currently only level files) while using Lunar Magic to edit Super Mario World ROMs.
 
+NOTE: Windows only, relies heavily on the win32api.
+
 ## Why is this a thing?
 
 Projects using git in combination with the convenient [Lunar Helper](https://github.com/MaddyThorson/LunarHelper) build system will likely experience the issue that git will consider identical .mwl level files to "differ", clogging up commits, causing incorrect merge conflicts and bloating repos. This is partially due to Lunar Helper exporting even unchanged levels every time it performs a Save. 
@@ -34,7 +36,7 @@ I'm not very comfortable with any of these for obvious reasons and will instead 
 
 ## Building
 
-Probably just open in Visual Studio (I used 2019) and Build in release mode, I'm not a C++ developer, don't ask me for details please.
+Probably just open in Visual Studio (I used 2019) and Build in x86 release mode, I'm not a C++ developer, don't ask me for details please.
 
 If you put a `#define DEBUG` at the top of `lunar_monitor.cpp` you'll get an exe that'll pop up a console window while it's executing, giving you some debug info if you need it.
 
