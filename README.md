@@ -22,7 +22,7 @@ Note that the first limitation should rarely be an issue, especially since Lunar
 
 ## Why is this a *good* thing?
 
-By exporting only levels that were (very likely) truly changed by the user, Lunar Monitor in combination with [this compatible fork of Lunar Helper](https://github.com/Underrout/LunarHelper/tree/lunar_monitor_compatible), which doesn't export .mwls at all during Save operations, ensures that only truly relevant changes to level data actually get included in commits. This way it will be easier to tell what was actually changed in a commit, merging changes to *different* levels should be completely seamless and repo size should grow more slowly too. 
+By exporting only levels that were (very likely) truly changed by the user, Lunar Monitor in combination with [this slightly edited fork of Lunar Helper](https://github.com/Underrout/LunarHelper), which doesn't export .mwls at all during Save operations, ensures that only truly relevant changes to level data actually get included in commits. This way it will be easier to tell what was actually changed in a commit, merging changes to *different* levels should be completely seamless and repo size should grow more slowly too. 
 
 ## Ok, but it's still not optimal
 
@@ -42,7 +42,7 @@ If you put a `#define DEBUG` at the top of `lunar_monitor.cpp` you'll get an exe
 
 ## Setup
 
-NOTE: If you want to use this with Lunar Helper make sure to use [this branch](https://github.com/Underrout/LunarHelper/tree/lunar_monitor_compatible) which does not export .mwls and ensures there's no conflict between Lunar Helper and Lunar Monitor during Builds.
+NOTE: If you want to use this with Lunar Helper make sure to use [this branch](https://github.com/Underrout/LunarHelper) which does not export .mwls and ensures there's no conflict between Lunar Helper and Lunar Monitor during Builds.
 
 Place `lunar_monitor.exe`, `usertoolbar.txt` and `lunar_monitor_config.txt` in the same folder as the Lunar Magic executable you want to invoke Lunar Monitor when it opens. If you're using Lunar Helper you probably want to put them in the same folder specified by "lm_path" in its config file(s) for convenience.
 
