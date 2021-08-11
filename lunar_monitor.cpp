@@ -56,8 +56,10 @@ namespace fs = std::filesystem;
 
 #define FULL_ROM_PATH DIRECTORY_TO_WATCH ROM_NAME_TO_WATCH
 
-unsigned int lvlNum{ 0x105 };
-std::map<const std::string, const std::string> config;
+unsigned int g_lvlNum{ 0x105 };
+std::map<const std::string, const std::string> g_config;
+HWND g_lmHandle, g_hwnd;
+HWINEVENTHOOK g_hweh;
 
 LPCWSTR szWndClass = SZ_WND_CLASS;
 
@@ -67,8 +69,11 @@ bool CreateNewConsole(int16_t minLength);
 void AdjustConsoleBuffer(int16_t minLength);
 #endif
 
-LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
+LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+void CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd,
+    LONG idObject, LONG idChild, DWORD idEventThread, DWORD dwmsEventTime);
 
+bool registerForLunarMagicCloseEvent(HWND lmHandle);
 bool markerFilePresent();
 std::wstring strToWstr(const std::string& s);
 std::map<const std::string, const std::string> getConfig(const fs::path& configFilePath);
@@ -103,7 +108,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
     fs::path configFilePath = argv.at(1);
     configFilePath = configFilePath.parent_path() /= CONFIG_FILE_NAME;
 
-    config = getConfig(configFilePath);
+    g_config = getConfig(configFilePath);
 
     MSG msg;
 
@@ -124,9 +129,9 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
     wcex.hIconSm = NULL;
     RegisterClassEx(&wcex);
 
-    auto window = CreateWindowExW(0, szWndClass, szWndClass, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, 0, 0, hInstance, 0);
+    g_hwnd = CreateWindowExW(0, szWndClass, szWndClass, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, 0, 0, hInstance, 0);
 
-    if (!window)
+    if (!g_hwnd)
     {
 #ifdef DEBUG
         std::cerr << "Failed to create window needed to receive Lunar Magic notifications, exiting" << std::endl;
@@ -134,9 +139,16 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
         exit(1);
     }
 
-    ShowWindow(window, SW_HIDE);
+    g_lmHandle = (HWND)std::stoull(argv.at(2), 0, 16);
+    if (!registerForLunarMagicCloseEvent(g_lmHandle))
+    {
+#ifdef DEBUG
+        std::cerr << "Failed to register for Lunar Magic close event, presumably it was opened and closed very quickly (?), exiting" << std::endl;
+#endif
+        exit(1);
+    }
 
-    std::string dirToWatch = config.at("directory_to_watch");
+    std::string dirToWatch = g_config.at("directory_to_watch");
     std::wstring stemp = std::wstring(dirToWatch.begin(), dirToWatch.end());
     LPCWSTR d = stemp.c_str();
 
@@ -144,7 +156,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
         d, false, FILE_NOTIFY_CHANGE_LAST_WRITE
     );
 
-    std::time_t previousLastModifiedTime = getLastModifiedTime(config.at("rom_path"));
+    std::time_t previousLastModifiedTime = getLastModifiedTime(g_config.at("rom_path"));
 
     while (true)
     {
@@ -155,7 +167,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 #ifdef DEBUG
             std::cout << "Change in ROM dir detected" << std::endl;
 #endif
-            handlePotentialROMChange(config.at("rom_path"), lvlNum, previousLastModifiedTime);
+            handlePotentialROMChange(g_config.at("rom_path"), g_lvlNum, previousLastModifiedTime);
         }
 
         FindNextChangeNotification(romChangeHandle);
@@ -166,7 +178,12 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
             TranslateMessage(&msg);
             DispatchMessage(&msg);
         }
+
+        if (msg.message == WM_QUIT)
+            break;
     }
+
+    return msg.wParam;
 }
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -178,6 +195,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case WM_COMMAND:
         break;
     case WM_DESTROY:
+        if (g_hweh) 
+            UnhookWinEvent(g_hweh);
         PostQuitMessage(0);
         break;
     default:
@@ -187,16 +206,38 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 #ifdef DEBUG
             std::cout << "LM now in level " << std::hex << std::uppercase << newLvlNum << std::dec << std::endl;
 #endif
-            lvlNum = newLvlNum;
+            g_lvlNum = newLvlNum;
         }
         return DefWindowProc(hWnd, message, wParam, lParam);
     }
     return 0;
 }
 
+void CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, 
+    LONG idObject, LONG idChild, DWORD idEventThread, DWORD dwmsEventTime)
+{
+    if (event == EVENT_OBJECT_DESTROY && hwnd == g_lmHandle && idObject == OBJID_WINDOW && idChild == INDEXID_CONTAINER) 
+    {
+        PostMessage(g_hwnd, WM_CLOSE, 0, 0);
+    }
+}
+
+bool registerForLunarMagicCloseEvent(HWND lmHandle)
+{
+    DWORD dwProcessId;
+    DWORD dwThreadId = GetWindowThreadProcessId(lmHandle,
+        &dwProcessId);
+    if (dwThreadId)
+        g_hweh = SetWinEventHook(
+            EVENT_OBJECT_DESTROY, EVENT_OBJECT_DESTROY,
+            NULL, WinEventProc,
+            dwProcessId, dwThreadId, WINEVENT_OUTOFCONTEXT);
+    return g_hweh != NULL;
+}
+
 bool markerFilePresent()
 {
-    fs::path markerPath = config.at("suspend_monitoring_marker_path");
+    fs::path markerPath = g_config.at("suspend_monitoring_marker_path");
     return fs::exists(markerPath);
 }
 
@@ -329,7 +370,7 @@ bool exportLvl(unsigned int lvlNum)
     std::cout << "Attempting to export level " << std::hex << std::uppercase << lvlNum << std::nouppercase << std::dec << std::endl;
 #endif
 
-    std::string mwlFileName = config.at("mwl_file_format");
+    std::string mwlFileName = g_config.at("mwl_file_format");
     int indexToInsertLvlNum = mwlFileName.find("#");
 
     if (indexToInsertLvlNum != std::string::npos)
@@ -341,13 +382,13 @@ bool exportLvl(unsigned int lvlNum)
         mwlFileName = std::regex_replace(mwlFileName, std::regex("\\#"), lvlNumString);
     }
 
-    fs::path levelPath = config.at("directory_to_watch");
-    levelPath /= config.at("level_directory");
+    fs::path levelPath = g_config.at("directory_to_watch");
+    levelPath /= g_config.at("level_directory");
     levelPath /= mwlFileName;
 
     std::wstringstream ws;
 
-    ws << " -ExportLevel \"" << strToWstr(config.at("rom_path")) << "\" \"" << levelPath.wstring() << "\" " << std::hex
+    ws << " -ExportLevel \"" << strToWstr(g_config.at("rom_path")) << "\" \"" << levelPath.wstring() << "\" " << std::hex
         << std::uppercase << lvlNum << std::nouppercase << std::dec;
 
 #ifdef DEBUG
@@ -365,7 +406,7 @@ bool exportLvl(unsigned int lvlNum)
     si.cb = sizeof(si);
     ZeroMemory(&pi, sizeof(pi));
 
-    if (!CreateProcess(strToWstr(config.at("lunar_magic_path")).c_str(), buf.data(), NULL, NULL, false, 0, NULL, NULL, &si, &pi))
+    if (!CreateProcess(strToWstr(g_config.at("lunar_magic_path")).c_str(), buf.data(), NULL, NULL, false, 0, NULL, NULL, &si, &pi))
     {
 #ifdef DEBUG
         std::cerr << "Creating level export process failed: " << GetLastError() << std::endl;

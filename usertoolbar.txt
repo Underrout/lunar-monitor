@@ -1,5 +1,5 @@
 ***START***
-"lunar_monitor.exe" "%4\"
+"lunar_monitor.exe" "%4\" %9
 LM_DEFAULT
 LM_NO_BUTTON,LM_CLOSE_ON_CLOSE,LM_AUTORUN_ON_NEW_ROM,LM_NOTIFY_ON_NEW_LEVEL
 LM_DEFAULT
