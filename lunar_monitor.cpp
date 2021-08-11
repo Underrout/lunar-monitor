@@ -1,6 +1,8 @@
 // lunar-monitor-prototype-window.cpp : Defines the entry point for the application.
 //
 
+// #define DEBUG
+
 #define CONFIG_FILE_NAME "lunar_monitor_config.txt"
 #define SUSPEND_MONITORING_MARKER_FILE ".suspend_lunar_monitor"
 
@@ -122,7 +124,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
     wcex.hIconSm = NULL;
     RegisterClassEx(&wcex);
 
-    auto window = CreateWindowExW(0, szWndClass, szWndClass, 0, 0, 0, 0, 0, 0, 0, hInstance, 0);
+    auto window = CreateWindowExW(0, szWndClass, szWndClass, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, 0, 0, hInstance, 0);
 
     if (!window)
     {
@@ -158,7 +160,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 
         FindNextChangeNotification(romChangeHandle);
 
-        BOOL msgAvailable = PeekMessage(&msg, NULL, 0xBECA, 0xBECA, PM_REMOVE);
+        BOOL msgAvailable = PeekMessage(&msg, NULL, 0, 0, PM_REMOVE);
         if (msgAvailable)
         {
             TranslateMessage(&msg);
@@ -179,7 +181,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         PostQuitMessage(0);
         break;
     default:
-        if (lParam >> 16 == 0x6942)
+        if (message == 0xBECA && lParam >> 16 == 0x6942)
         {
             unsigned int newLvlNum = ((lParam >> 6) & 0x3FF);
 #ifdef DEBUG
