@@ -48,7 +48,13 @@ NOTE: If you want to use this with Lunar Helper make sure to use [this branch](h
 
 Also please be aware of the current [limitations](https://github.com/Underrout/lunar-monitor#limitations).
 
-Place `lunar_monitor.exe`, `usertoolbar.txt` and `lunar_monitor_config.txt` in the same folder as the Lunar Magic executable you want to invoke Lunar Monitor when it opens. If you're using Lunar Helper you probably want to put them in the same folder specified by "lm_path" in its config file(s) for convenience.
+To set this up you will need the `lunar_monitor.exe`, `usertoolbar.txt` and `lunar_monitor_config.txt` files. On the right side of this page there is a "Releases" tab where you can get the latest up-to-date zip containing all the files you need:
+
+![Screenshot of Releases section in repo](https://i.imgur.com/uiYwRth.png)
+
+Alternatively, you can build the .exe from the source code yourself (as badly described above) and grab the two text files directly from the repo.
+
+Now place `lunar_monitor.exe`, `usertoolbar.txt` and `lunar_monitor_config.txt` in the same folder as the Lunar Magic executable you want to invoke Lunar Monitor when it opens. If you're using Lunar Helper you probably want to put them in the same folder specified by "lm_path" in its config file(s) for convenience.
 
 Now open `lunar_monitor_config.txt` in a text editor of your choice. It should currently look like this (excluding the comments):
 
