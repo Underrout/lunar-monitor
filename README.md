@@ -12,14 +12,6 @@ Unfortunately, this can seemingly not be resolved by comparing newly exported .m
 
 In order to get around this issue I decided to create Lunar Monitor, which is basically a monitoring service that starts as soon as Lunar Magic is opened. Lunar Monitor will continually monitor a user-specified ROM while Lunar Magic is open, if a write to the ROM is detected, the monitor will check what window is currently active. If it's the main Lunar Magic level editor it will instruct Lunar Magic to export the level that was (hopefully) just saved to a user-specified directory. 
 
-Currently there are two limitations to this approach:
-
-- Since importing (Ex)GFX counts as a ROM write and occurs in the main level editor window, the monitor will think the currently open level was just saved and export the level despite it not having actually been saved
-
-- Lunar Magic has a "Save level to ROM as ..." dialog which can be used to effectively copy a level's layout to another level number, unfortunately the monitor cannot currently detect this situation correctly and will export the original level rather than the "new" copied level, to further worsen this situation Lunar Magic does not currently notify the monitor correctly about it now being in this new level and any subsequent saves of this copied level will also result in the original level being exported mistakenly until the user switches to the level "officially" via Alt+PgUp/Alt+PgDown or the "Open level number" dialog
-
-Note that the first limitation should rarely be an issue, especially since Lunar Helper will actually import (Ex)GFX without triggering Lunar Monitor during Build operations. The second situation is more of an issue, unfortunately there is not much I think I can currently do to resolve it without substantial effort. If Lunar Magic ever fixes the LM_NOTIFY_ON_NEW_LEVEL custom toolbar button option or adds new notification options that make this whole process simpler and more reliable I will look into resolving these limitations.
-
 ## Why is this a *good* thing?
 
 By exporting only levels that were (very likely) truly changed by the user, Lunar Monitor in combination with [this slightly edited fork of Lunar Helper](https://github.com/Underrout/LunarHelper), which doesn't export .mwls at all during Save operations, ensures that only truly relevant changes to level data actually get included in commits. This way it will be easier to tell what was actually changed in a commit, merging changes to *different* levels should be completely seamless and repo size should grow more slowly too. 
@@ -34,6 +26,16 @@ True, there are a lot of other things I would love to be able to export with thi
 
 I'm not very comfortable with any of these for obvious reasons and will instead wait for future Lunar Magic updates to hopefully add additional facilities for "hook" types of systems.
 
+## Limitations
+
+Currently there are two limitations to this whole approach:
+
+- Since importing (Ex)GFX counts as a ROM write and occurs in the main level editor window, the monitor will think the currently open level was just saved and export the level despite it not having actually been saved
+
+- Lunar Magic has a "Save level to ROM as ..." dialog which can be used to effectively copy a level's layout to another level number, unfortunately the monitor cannot currently detect this situation correctly and will export the original level rather than the "new" copied level, to further worsen this situation Lunar Magic does not currently notify the monitor correctly about it now being in this new level and any subsequent saves of this copied level will also result in the original level being exported mistakenly until the user switches to the level "officially" via Alt+PgUp/Alt+PgDown or the "Open level number" dialog
+
+Note that the first limitation should rarely be an issue, especially since Lunar Helper will actually import (Ex)GFX without triggering Lunar Monitor during Build operations. The second situation is more of an issue, unfortunately there is not much I think I can currently do to resolve it without substantial effort. If Lunar Magic ever fixes the LM_NOTIFY_ON_NEW_LEVEL custom toolbar button option or adds new notification options that make this whole process simpler and more reliable I will look into resolving these limitations.
+
 ## Building
 
 Probably just open in Visual Studio (I used 2019) and Build in x86 release mode, I'm not a C++ developer, don't ask me for details please.
@@ -43,6 +45,8 @@ If you put a `#define DEBUG` at the top of `lunar_monitor.cpp` you'll get an exe
 ## Setup
 
 NOTE: If you want to use this with Lunar Helper make sure to use [this branch](https://github.com/Underrout/LunarHelper) which does not export .mwls and ensures there's no conflict between Lunar Helper and Lunar Monitor during Builds.
+
+Also please be aware of the current [limitations](https://github.com/Underrout/lunar-monitor#limitations).
 
 Place `lunar_monitor.exe`, `usertoolbar.txt` and `lunar_monitor_config.txt` in the same folder as the Lunar Magic executable you want to invoke Lunar Monitor when it opens. If you're using Lunar Helper you probably want to put them in the same folder specified by "lm_path" in its config file(s) for convenience.
 
@@ -63,7 +67,11 @@ mwl_file_format: "level #.mwl"
 
 "mwl_file_format" lets you specify a template for .mwl names that will be exported. In the above example, if you were to save level 10A in Lunar Magic it would be exported as `level 10A.mwl`, since the `#` is replaced by the level number if it's found in the "mwl_file_format". The .mwl file names don't matter for Lunar Helper so it doesn't really matter what "mwl_file_format" is as long as it includes `#` somewhere to distinguish different level numbers.
 
+Generally you won't have to change the contents of `usertoolbar.txt`, unless you're already using some user-defined toolbar buttons, in which case you should copy the contents of `usertoolbar.txt` into your pre-existing `usertoolbar.txt`.
+
 You should be good to go now. Just open the specified Lunar Magic executable manually or via Lunar Helper's Edit operation, save a level and it should immediately be exported to the specified level directory!
+
+Note that if you're moving a pre-existing project to this system you **must** manually export all levels that were previously edited when newly setting up your project, since the included altered version of Lunar Helper will *never* export your levels for you. To do this just open Lunar Magic, go to File -> Levels -> Export Multiple Levels to File... and export all edited levels to the "level_directory" you specified in `lunar_monitor_config.txt`.
 
 ## Notes on compatibility with other workflows
 
