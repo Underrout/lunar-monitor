@@ -379,6 +379,9 @@ bool exportLvl(unsigned int lvlNum)
         sstream << std::hex << std::uppercase << lvlNum << std::nouppercase << std::dec;
         std::string lvlNumString = sstream.str();
 
+        while (lvlNumString.size() != 3)
+            lvlNumString = "0" + lvlNumString;
+
         mwlFileName = std::regex_replace(mwlFileName, std::regex("\\#"), lvlNumString);
     }
 
