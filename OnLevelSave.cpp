@@ -1,7 +1,6 @@
 #include "OnLevelSave.h"
 
 #include <sstream>
-#include <regex>
 
 void OnLevelSave::onLevelSave(bool succeeded, unsigned int savedLevelNumber, LM& lm, const std::optional<const Config>& config)
 {
@@ -31,7 +30,7 @@ void OnLevelSave::onSuccessfulLevelSave(unsigned int savedLevelNumber, LM& lm, c
         while (lvlNumString.size() != 3)
             lvlNumString = "0" + lvlNumString;
 
-        mwlFileName = std::regex_replace(mwlFileName, std::regex("\\#"), lvlNumString);
+        mwlFileName = mwlFileName.substr(0, indexToInsertLvlNum) + lvlNumString + mwlFileName.substr(indexToInsertLvlNum + 1);
     }
 
     mwlPath /= mwlFileName;

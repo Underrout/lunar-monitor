@@ -1,9 +1,4 @@
-// dllmain.cpp : Defines the entry point for the DLL application.
-
-constexpr const char* CONFIG_FILE_PATH = "lunar-monitor-config.txt";
-
-#include "pch.h"
-
+#include <Windows.h>
 #include <detours.h>
 
 #include <iostream>
@@ -15,6 +10,8 @@ constexpr const char* CONFIG_FILE_PATH = "lunar-monitor-config.txt";
 #include "LMFunctions.h"
 #include "LM.h"
 #include "Config.h"
+
+constexpr const char* CONFIG_FILE_PATH = "lunar-monitor-config.txt";
 
 std::optional<Config> config = std::nullopt;
 LM lm{};
