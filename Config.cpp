@@ -53,6 +53,9 @@ Config::Config(const fs::path& configFilePath)
 			throw std::runtime_error("Non existing config var tried to be defined: " + currLine);
 		}
 	}
+	if (std::any_of(setVariables.begin(), setVariables.end(), false)) {
+		throw std::runtime_error("Not all config variables have been set");
+	}
 }
 
 void Config::setConfigVar(const std::string& varName, const std::string& varVal, const fs::path& basePath)
