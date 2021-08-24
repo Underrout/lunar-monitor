@@ -1,23 +1,12 @@
 // dllmain.cpp : Defines the entry point for the DLL application.
 
-#define CONFIG_FILE_PATH "lunar-monitor-config.txt"
+constexpr const char* CONFIG_FILE_PATH = "lunar-monitor-config.txt";
 
 #include "pch.h"
 
-#include <Windows.h>
 #include <detours.h>
 
 #include <iostream>
-#include <cstdint>
-
-#include <string>
-#include <sstream>
-
-#include <optional>
-#include <filesystem>
-
-namespace fs = std::filesystem;
-
 #include "OnLevelSave.h"
 #include "OnMap16Save.h"
 #include "OnGlobalDataSave.h"
@@ -38,13 +27,13 @@ BOOL SaveCreditsFunction();
 BOOL SaveTitlescreenFunction();
 BOOL SaveSharedPalettesFunction(BOOL x);
 
-saveLevelFunction LMSaveLevelFunction = (saveLevelFunction)(LM_LEVEL_SAVE_FUNCTION);
-saveMap16Function LMSaveMap16Function = (saveMap16Function)(LM_MAP16_SAVE_FUNCTION);
-saveOWFunction LMSaveOWFunction = (saveOWFunction)(LM_OW_SAVE_FUNCTION);
-newRomFunction LMNewRomFunction = (newRomFunction)(LM_NEW_ROM_FUNCTION);
-saveCreditsFunction LMSaveCreditsFunction = (saveCreditsFunction)(LM_CREDITS_SAVE_FUNCTION);
-saveTitlescreenFunction LMSaveTitlescreenFunction = (saveTitlescreenFunction)(LM_TITLESCREEN_SAVE_FUNCTION);
-saveSharedPalettesFunction LMSaveSharedPalettesFunction = (saveSharedPalettesFunction)(LM_SHARED_PALETTES_SAVE_FUNCTION);
+auto LMSaveLevelFunction = AddressToFnPtr<saveLevelFunction>(LM_LEVEL_SAVE_FUNCTION);
+auto LMSaveMap16Function = AddressToFnPtr<saveMap16Function>(LM_MAP16_SAVE_FUNCTION);
+auto LMSaveOWFunction = AddressToFnPtr<saveOWFunction>(LM_OW_SAVE_FUNCTION);
+auto LMNewRomFunction = AddressToFnPtr<newRomFunction>(LM_NEW_ROM_FUNCTION);
+auto LMSaveCreditsFunction = AddressToFnPtr<saveCreditsFunction>(LM_CREDITS_SAVE_FUNCTION);
+auto LMSaveTitlescreenFunction = AddressToFnPtr<saveTitlescreenFunction>(LM_TITLESCREEN_SAVE_FUNCTION);
+auto LMSaveSharedPalettesFunction = AddressToFnPtr<saveSharedPalettesFunction>(LM_SHARED_PALETTES_SAVE_FUNCTION);
 
 void DllAttach(HMODULE hModule);
 void DllDetach(HMODULE hModule);

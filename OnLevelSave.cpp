@@ -1,5 +1,8 @@
 #include "OnLevelSave.h"
 
+#include <sstream>
+#include <regex>
+
 void OnLevelSave::onLevelSave(bool succeeded, unsigned int savedLevelNumber, LM& lm, const std::optional<const Config>& config)
 {
     if (succeeded && config.has_value()) 

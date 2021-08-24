@@ -1,5 +1,10 @@
 #include "Config.h"
 
+#include <regex>
+#include <fstream>
+#include <unordered_set>
+#include <stdexcept>
+
 Config::Config(const fs::path& configFilePath)
 {
 	const fs::path basePath = configFilePath.parent_path();

@@ -2,10 +2,6 @@
 
 #include <filesystem>
 #include <string>
-#include <regex>
-#include <fstream>
-#include <unordered_set>
-#include <stdexcept>
 
 namespace fs = std::filesystem;
 

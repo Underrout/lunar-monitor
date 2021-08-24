@@ -1,5 +1,7 @@
 #include "OnGlobalDataSave.h"
 
+#include <sstream>
+
 void OnGlobalDataSave::onGlobalDataSave(bool succeeded, LM& lm, const std::optional<const Config>& config)
 {
 	if (succeeded && config.has_value())

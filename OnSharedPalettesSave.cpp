@@ -1,5 +1,7 @@
 #include "OnSharedPalettesSave.h"
 
+#include <sstream>
+
 void OnSharedPalettesSave::onSharedPalettesSave(bool succeeded, LM& lm, const std::optional<const Config>& config)
 {
 	if (succeeded && config.has_value())

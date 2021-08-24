@@ -1,5 +1,9 @@
 #include "LevelEditor.h"
 
+#include <sstream>
+#include <vector>
+#include <string>
+
 namespace fs = std::filesystem;
 
 unsigned int LevelEditor::getCurrLevelNumber()
