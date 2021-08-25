@@ -42,13 +42,11 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
     switch (ul_reason_for_call)
     {
         case DLL_PROCESS_ATTACH:
-            Logger::log_message(L"Attaching to process...");
             DllAttach(hModule);
             break;
         case DLL_THREAD_ATTACH:
             break;
         case DLL_PROCESS_DETACH:
-            Logger::log_message(L"Detaching from process...");
             DllDetach(hModule);
             break;
         case DLL_THREAD_DETACH:
