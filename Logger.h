@@ -15,21 +15,24 @@ enum class LogSeverity {
 	Error
 };
 
+// The logger uses wide char for everything, exceptions what()'s don't.
+// To fix this issue we provide this WhatWide wrapper that just takes any exception and copies it's what() argument
+// into a wide char buffer, resources are managed automatically using RAII
 class WhatWide {
 	wchar_t* m_what = nullptr;
 public:
-	WhatWide(const std::exception& exc);
+	WhatWide(const std::exception& exc) noexcept;
 	const wchar_t* what() noexcept;
-	~WhatWide();
+	~WhatWide() noexcept;
 };
 
 namespace Logger {
-	LogLevel getLogLevel();
-	void setLogLevel(LogLevel);
-	void setLogPath(fs::path path);
-	const fs::path& getLogPath();
-	void log(LogSeverity, const wchar_t* fmt, ...);
-	void log_message(const wchar_t* fmt, ...);
-	void log_warning(const wchar_t* fmt, ...);
-	void log_error(const wchar_t* fmt, ...);
+	LogLevel getLogLevel() noexcept;
+	void setLogLevel(LogLevel) noexcept;
+	void setLogPath(fs::path path) noexcept;
+	const fs::path& getLogPath() noexcept;
+	void log(LogSeverity, const wchar_t* fmt, ...) noexcept;
+	void log_message(const wchar_t* fmt, ...) noexcept;
+	void log_warning(const wchar_t* fmt, ...) noexcept;
+	void log_error(const wchar_t* fmt, ...) noexcept;
 }

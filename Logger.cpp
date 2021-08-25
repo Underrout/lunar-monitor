@@ -1,4 +1,6 @@
 #include "Logger.h"
+#define TIMED_LOGGER_IMPL 0
+
 #include <cstdarg>
 #include <vector>
 #include <string>
@@ -6,29 +8,42 @@
 #include <fstream>
 #include <chrono>
 #include <memory>
+#if TIMED_LOGGER_IMPL
+#include <thread>
+#include <mutex>
+#endif
 #include <Windows.h>
 
 constexpr const wchar_t* MODULE_NAME = L"lunar-monitor.dll";
 
-// just a quick class to prevent from having to think about allocation and deallocation of things manually
+// A simple class to format a CharT buffer with a va_list, it uses RAII to dispose of its storage
+// Doesn't require manual memory management
+template <typename CharT, typename = std::enable_if_t<std::is_same_v<CharT, char> || std::is_same_v<CharT, wchar_t>>>
 class FormatTempBuffer {
-	wchar_t* m_buffer = nullptr;
+	CharT* m_buffer = nullptr;
 public:
-	FormatTempBuffer(const wchar_t* fmt, va_list argptr) {
-		auto ret = _vscwprintf_l(fmt, nullptr, argptr);
-		m_buffer = new wchar_t[ret + 1];
-		vswprintf(m_buffer, ret + 1, fmt, argptr);
+	FormatTempBuffer(const CharT* fmt, va_list argptr) noexcept {
+		if constexpr (std::is_same_v<CharT, wchar_t>) {
+			auto ret = _vscwprintf_l(fmt, nullptr, argptr);
+			m_buffer = new CharT[ret + 1];
+			vswprintf(m_buffer, ret + 1, fmt, argptr);
+		}
+		else {
+			auto ret = _vscprintf_l(fmt, nullptr, argptr);
+			m_buffer = new CharT[ret + 1];
+			vsprintf(m_buffer, ret + 1, fmt, argptr);
+		}
 	}
-	wchar_t* buffer() {
+	CharT* buffer() noexcept {
 		return m_buffer;
 	}
 
-	~FormatTempBuffer() {
+	~FormatTempBuffer() noexcept {
 		delete[] m_buffer;
 	}
 };
 
-WhatWide::WhatWide(const std::exception& exc) {
+WhatWide::WhatWide(const std::exception& exc) noexcept {
 	const char* what = exc.what();
 	size_t len = strlen(what);
 	m_what = new wchar_t[len + 1];
@@ -40,15 +55,16 @@ const wchar_t* WhatWide::what() noexcept
 	return m_what;
 }
 
-WhatWide::~WhatWide()
+WhatWide::~WhatWide() noexcept
 {
 	delete[] m_what;
 }
 
 
-// to be used only in dire situations.
+// Function to use to log errors when the logger can't be used (e.g. during the Loggers' construction or destruction)
+// Use sparingly and with caution
 #ifdef _DEBUG
-void EmergencyLogToFile(const wchar_t* fmt, ...) {
+void EmergencyLogToFile(const wchar_t* fmt, ...) noexcept {
 	va_list lst{};
 	va_start(lst, fmt);
 	std::wofstream emergency{};
@@ -70,7 +86,7 @@ namespace Logger {
 		HANDLE m_output;
 	public:
 
-		TheLoggerConsole() {
+		TheLoggerConsole() noexcept {
 			if (!AllocConsole()) {
 				// if we can't allocate the console we can't use the log file because this is called in its constructor
 				// therefore the file handle is not guaranteed to exist and we'd invoke infinite recursion
@@ -81,10 +97,10 @@ namespace Logger {
 			}
 			m_output = GetStdHandle(STD_OUTPUT_HANDLE);
 		}
-		HANDLE getConsoleHandle() {
+		HANDLE getConsoleHandle() noexcept {
 			return m_output;
 		}
-		void WriteToConsole(LogSeverity severity, const wchar_t* msg, size_t length) const {
+		void WriteToConsole(LogSeverity severity, const wchar_t* msg, size_t length) const noexcept {
 			switch (severity) {
 			case LogSeverity::Message:
 				SetConsoleTextAttribute(m_output, C_GREEN);
@@ -105,7 +121,7 @@ namespace Logger {
 			SetConsoleTextAttribute(m_output, C_WHITE);
 		}
 
-		~TheLoggerConsole() {
+		~TheLoggerConsole() noexcept {
 			if (!FreeConsole()) {
 				// if we can't free the console we can't use the log file because this is called in its destructor
 				// therefore the file handle is not guaranteed to exist and we'd invoke undefined behavior and/or crashes
@@ -117,6 +133,20 @@ namespace Logger {
 		}
 	};
 #endif
+
+	// This is a very simple buffered thread-safe¹ logger
+	// This logger doesn't keep a file open, instead, it stores all messages sent to it into a buffer (vector)
+	// After the buffer passes a certain threshold or a timer is elapsed depending on the implementation chosen, 
+	// the logger opens a file, *appending* all messages to it, and then closes the file.
+	// Flushing the buffers to the file also clears it.
+	// On destruction it logs any leftover message that was still in the buffer.
+
+	// To get flush-on-timer-elapsed behavior change the value of the define at the top of the file to 1
+	// The logger on a timer may be preferable but it requires using a thread and a lock to make sure we don't cause data races
+
+	// When the _DEBUG define exists, the logger also opens a Console window where it prints every message without buffering.
+	// ¹: This class is only thread-safe when the flush-on-timer-elapsed behavior is chosen
+
 	class TheLogger {
 	private:
 #ifdef _DEBUG
@@ -126,19 +156,29 @@ namespace Logger {
 		LogLevel m_level;
 		mutable std::wofstream m_file;
 		fs::path m_filepath;
-		HWND lm_window_handle = nullptr;
+		HWND m_lm_window_handle = nullptr;
 		mutable std::vector<std::wstring> m_logs;
+#if TIMED_LOGGER_IMPL
+		std::thread m_thread;
+		mutable std::mutex m_logs_mutex{};
+		static constexpr long long s_seconds = 10;
+#else
 		static constexpr size_t s_threshold = 10;
-
-		void open_log_file() const {
+#endif
+		void open_log_file() const noexcept {
 			m_file.open(m_filepath, std::wofstream::out | std::wofstream::app);
 		}
 
-		void close_log_file() const {
+		void close_log_file() const noexcept {
 			m_file.close();
 		}
 
-		void flush_logs_to_file() const {
+		void flush_logs_to_file() const noexcept {
+#if TIMED_LOGGER_IMPL
+			std::lock_guard lock{ m_logs_mutex };
+			if (m_logs.empty() || !m_has_logged_once)
+				return;
+#endif
 			open_log_file();
 			for (auto& log : m_logs)
 				m_file << log;
@@ -147,7 +187,19 @@ namespace Logger {
 		}
 
 	public:
-		TheLogger() : m_level(LogLevel::Log), m_filepath(L"lunar_monitor_log.txt"), m_file() {
+		TheLogger() noexcept : m_level(LogLevel::Log), m_filepath(L"lunar_monitor_log.txt"), m_file() {
+#if TIMED_LOGGER_IMPL
+			// Flush messages to file every 10 seconds
+			auto thread_executor = [this]() {
+				while (true) {
+					if (!m_logs.empty()) {
+						flush_logs_to_file();
+					}
+					std::this_thread::sleep_for(std::chrono::seconds(s_seconds));
+				}
+			};
+			m_thread = std::thread{ thread_executor };
+#endif
 			auto callback = [](_In_ HWND hwnd, _In_ LPARAM lparam) -> BOOL {
 				TheLogger* logger = static_cast<TheLogger*>(reinterpret_cast<void*>(lparam));
 				DWORD other_proc_id{ 0 };
@@ -170,17 +222,17 @@ namespace Logger {
 			m_logs.push_back(stream.str());
 		}
 
-		void setLMWindowHandleImpl(HWND handle) {
-			lm_window_handle = handle;
+		void setLMWindowHandleImpl(HWND handle) noexcept {
+			m_lm_window_handle = handle;
 		}
 
-		void log(LogSeverity severity, const wchar_t* fmt, va_list argptr) const {
+		void log(LogSeverity severity, const wchar_t* fmt, va_list argptr) const noexcept {
 			m_has_logged_once = true;
 			switch (m_level) {
 			case LogLevel::Warn:
-				if (severity != LogSeverity::Message && lm_window_handle) {
+				if (severity != LogSeverity::Message && m_lm_window_handle) {
 					FormatTempBuffer msgbuf{ fmt, argptr };
-					MessageBoxW(lm_window_handle, msgbuf.buffer(), L"Lunar Monitor Warning", MB_OK | MB_ICONWARNING | MB_APPLMODAL);
+					MessageBoxW(m_lm_window_handle, msgbuf.buffer(), L"Lunar Monitor Warning", MB_OK | MB_ICONWARNING | MB_APPLMODAL);
 				}
 				[[fallthrough]];
 			case LogLevel::Log:
@@ -206,91 +258,95 @@ namespace Logger {
 				auto err = localtime_s(&time_now, &t_c);
 				if (err == 0)
 					stream << std::put_time(&time_now, L"[ %F %T ] - ") << buf.buffer() << L'\n';
+#if TIMED_LOGGER_IMPL
+				std::lock_guard lock{ m_logs_mutex };
+#endif
 				m_logs.push_back(stream.str());
 #ifdef _DEBUG
 				m_debug_console.WriteToConsole(severity, m_logs.back().c_str(), m_logs.back().size());
 #endif
+#if not TIMED_LOGGER_IMPL
 				if (m_logs.size() == s_threshold)
 					flush_logs_to_file();
+#endif
 			}
-			break;
+				break;
 			default:
 				break;
 			}
 		}
-		void setLogLevel(LogLevel level) {
+		void setLogLevel(LogLevel level) noexcept {
 			m_level = level;
 		}
 
-		void setLogPath(fs::path&& path) {
-			flush_logs_to_file();
-			if (!m_has_logged_once)
-				fs::remove(m_filepath);
+		void setLogPath(fs::path&& path) noexcept {
+			if (m_has_logged_once)
+				flush_logs_to_file();
 			m_filepath = std::move(path);
 		}
 
-		LogLevel getLogLevel() const {
+		LogLevel getLogLevel() const noexcept {
 			return m_level;
 		}
 
-		const fs::path& getLogPath() const {
+		const fs::path& getLogPath() const noexcept {
 			return m_filepath;
 		}
 
-		~TheLogger() {
-			if (!m_file)
+		~TheLogger() noexcept {
+			if (!m_has_logged_once)
 				return;
 			if (m_level != LogLevel::Silent)
 				flush_logs_to_file();
 		}
 	};
 
-	static const std::unique_ptr<TheLogger>& getLoggerInstance()
+	static const std::unique_ptr<TheLogger>& getLoggerInstance() noexcept
 	{
 		static auto sLoggerInstance = std::make_unique<TheLogger>();
 		return sLoggerInstance;
 	}
 
-	LogLevel getLogLevel()
+	LogLevel getLogLevel() noexcept
 	{
 		return getLoggerInstance()->getLogLevel();
 	}
 
-	void setLogLevel(LogLevel level) {
+	void setLogLevel(LogLevel level) noexcept {
 		getLoggerInstance()->setLogLevel(level);
 	}
 
-	void log(LogSeverity severity, const wchar_t* fmt, ...) {
+	void log(LogSeverity severity, const wchar_t* fmt, ...) noexcept {
 		va_list lst{};
 		va_start(lst, fmt);
 		getLoggerInstance()->log(severity, fmt, lst);
 		va_end(lst);
 	}
 
-	void log_message(const wchar_t* fmt, ...) {
+	void log_message(const wchar_t* fmt, ...) noexcept {
 		va_list lst{};
 		va_start(lst, fmt);
 		getLoggerInstance()->log(LogSeverity::Message, fmt, lst);
 		va_end(lst);
 	}
-	void log_warning(const wchar_t* fmt, ...) {
+	void log_warning(const wchar_t* fmt, ...) noexcept {
 		va_list lst{};
 		va_start(lst, fmt);
 		getLoggerInstance()->log(LogSeverity::Warning, fmt, lst);
 		va_end(lst);
 	}
-	void log_error(const wchar_t* fmt, ...) {
+	void log_error(const wchar_t* fmt, ...) noexcept {
 		va_list lst{};
 		va_start(lst, fmt);
 		getLoggerInstance()->log(LogSeverity::Error, fmt, lst);
 		va_end(lst);
 	}
 
-	void setLogPath(fs::path path) {
+	void setLogPath(fs::path path) noexcept {
 		getLoggerInstance()->setLogPath(std::forward<fs::path>(path));
 	}
 
-	const fs::path& getLogPath() {
+	const fs::path& getLogPath() noexcept {
 		return getLoggerInstance()->getLogPath();
 	}
 }
