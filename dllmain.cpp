@@ -113,7 +113,7 @@ void SetConfig(const fs::path& basePath)
     catch (const std::runtime_error& err)
     {
         WhatWide what{ err };
-        Logger::log_fatal(L"Failed to setup configuration file, error was \"%s\"", what.what());
+        Logger::log_error(L"Failed to setup configuration file, error was \"%s\"", what.what());
         config = std::nullopt;
     }
 

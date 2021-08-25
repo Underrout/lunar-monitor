@@ -12,8 +12,7 @@ enum class LogLevel {
 enum class LogSeverity {
 	Message,
 	Warning,
-	Error,
-	Fatal
+	Error
 };
 
 class WhatWide {
@@ -33,5 +32,4 @@ namespace Logger {
 	void log_message(const wchar_t* fmt, ...);
 	void log_warning(const wchar_t* fmt, ...);
 	void log_error(const wchar_t* fmt, ...);
-	__declspec(noreturn) void log_fatal(const wchar_t* fmt, ...);
 }

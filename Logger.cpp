@@ -47,6 +47,7 @@ WhatWide::~WhatWide()
 
 
 // to be used only in dire situations.
+#ifdef _DEBUG
 void EmergencyLogToFile(const wchar_t* fmt, ...) {
 	va_list lst{};
 	va_start(lst, fmt);
@@ -57,6 +58,7 @@ void EmergencyLogToFile(const wchar_t* fmt, ...) {
 	emergency.close();
 	va_end(lst);
 }
+#endif
 
 namespace Logger {
 #ifdef _DEBUG
@@ -177,9 +179,6 @@ namespace Logger {
 				case LogSeverity::Error:
 					stream << L"[Error] - ";
 					break;
-				case LogSeverity::Fatal:
-					stream << L"[Fatal] - ";
-					break;
 				default:
 					stream << L"[Unspecified] - ";
 					break;
@@ -192,7 +191,7 @@ namespace Logger {
 #ifdef _DEBUG
 				m_debug_console.WriteToConsole(severity, m_logs.back().c_str(), m_logs.back().size());
 #endif
-				if (m_logs.size() == s_threshold || severity == LogSeverity::Fatal)
+				if (m_logs.size() == s_threshold)
 					flush_logs_to_file();
 			}
 			break;
@@ -266,28 +265,6 @@ namespace Logger {
 		va_start(lst, fmt);
 		getLoggerInstance()->log(LogSeverity::Error, fmt, lst);
 		va_end(lst);
-	}
-	
-	__declspec(noreturn) void log_fatal(const wchar_t* fmt, ...) {
-		HMODULE moduleHandle{};
-		va_list lst{};
-		va_start(lst, fmt);
-		auto ret = GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, MODULE_NAME, &moduleHandle);
-		if (!ret) {
-			auto lastError = GetLastError();
-			auto hresult = HRESULT_FROM_WIN32(lastError);
-			EmergencyLogToFile(L"Failed to get the module handle to close after fatal error: %X, HRESULT: %X", lastError, hresult);
-			va_end(lst);
-
-			// we tried all we could, it failed horribly, throw hands
-			exit(1);
-		}
-		else {
-			getLoggerInstance()->log(LogSeverity::Fatal, fmt, lst);
-			va_end(lst);
-			FreeLibraryAndExitThread(moduleHandle, 1);
-		}
-		__assume(0);
 	}
 
 	void setLogPath(fs::path path) {
