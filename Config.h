@@ -34,7 +34,7 @@ private:
 		{"clean_rom_path:"sv, 4},
 		{"global_data_path:"sv, 5},
 		{"shared_palettes_path:"sv, 6},
-		{"log_file_path:"sv, 7},
+		{"log_path:"sv, 7},
 		{"log_level:"sv, 8}
 	}};
 
