@@ -38,10 +38,13 @@ void OnLevelSave::onSuccessfulLevelSave(unsigned int savedLevelNumber, LM& lm, c
     fs::path romPath = lm.getPaths().getRomDir();
     romPath += lm.getPaths().getRomName();
 
-    lm.getLevelEditor().exportMwl(lm.getPaths().getLmExePath(), romPath, mwlPath, savedLevelNumber);
+    if (lm.getLevelEditor().exportMwl(lm.getPaths().getLmExePath(), romPath, mwlPath, savedLevelNumber))
+        Logger::log("Successfully completed OnLevelSave");
+    else
+        Logger::log("Failed to export mwl file for OnLevelSave");
 }
 
 void OnLevelSave::onFailedLevelSave(unsigned int savedLevelNumber, LM& lm)
 {
-
+    Logger::log("Failed OnLevelSave call");
 }

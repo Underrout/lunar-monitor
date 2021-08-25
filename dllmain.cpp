@@ -45,11 +45,11 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
             DllAttach(hModule);
             break;
         case DLL_THREAD_ATTACH:
-            DllDetach(hModule);
             break;
         case DLL_THREAD_DETACH:
             break;
         case DLL_PROCESS_DETACH:
+            DllDetach(hModule);
             break;
     }
     return TRUE;
@@ -108,8 +108,9 @@ void SetConfig(const fs::path& basePath)
     {
         config = Config(configPath);
     }
-    catch (const std::exception&)
+    catch (const std::runtime_error& err)
     {
+        Logger::log("Failed to setup configuration file, error was %s", err.what());
         config = std::nullopt;
     }
 
