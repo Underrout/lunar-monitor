@@ -126,6 +126,7 @@ namespace Logger {
 		LogLevel m_level;
 		mutable std::wofstream m_file;
 		fs::path m_filepath;
+		HWND lm_window_handle = nullptr;
 		mutable std::vector<std::wstring> m_logs;
 		static constexpr size_t s_threshold = 10;
 
@@ -147,6 +148,19 @@ namespace Logger {
 
 	public:
 		TheLogger() : m_level(LogLevel::Log), m_filepath(L"lunar_monitor_log.txt"), m_file() {
+			auto callback = [](_In_ HWND hwnd, _In_ LPARAM lparam) -> BOOL {
+				TheLogger* logger = static_cast<TheLogger*>(reinterpret_cast<void*>(lparam));
+				DWORD other_proc_id{ 0 };
+				GetWindowThreadProcessId(hwnd, &other_proc_id);
+				if (other_proc_id == GetCurrentProcessId()) {
+					logger->setLMWindowHandleImpl(hwnd);
+					return FALSE;
+				}
+				else {
+					return TRUE;
+				}
+			};
+			EnumWindows(callback, reinterpret_cast<uintptr_t>(this));
 			std::wstringstream stream{};
 			auto t_c = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 			struct tm time_now {};
@@ -155,13 +169,18 @@ namespace Logger {
 				stream << std::put_time(&time_now, L"Start of log: [ %F %T ]\n");
 			m_logs.push_back(stream.str());
 		}
+
+		void setLMWindowHandleImpl(HWND handle) {
+			lm_window_handle = handle;
+		}
+
 		void log(LogSeverity severity, const wchar_t* fmt, va_list argptr) const {
 			m_has_logged_once = true;
 			switch (m_level) {
 			case LogLevel::Warn:
-				if (severity != LogSeverity::Message) {
-					// TODO: find a way to make LM pop up a window with the message here
-					// and continue as it was LogLevel::Log
+				if (severity != LogSeverity::Message && lm_window_handle) {
+					FormatTempBuffer msgbuf{ fmt, argptr };
+					MessageBoxW(lm_window_handle, msgbuf.buffer(), L"Lunar Monitor Warning", MB_OK | MB_ICONWARNING | MB_APPLMODAL);
 				}
 				[[fallthrough]];
 			case LogLevel::Log:
