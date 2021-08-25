@@ -21,17 +21,18 @@ void OnSharedPalettesSave::onSuccessfulSharedPalettesSave(LM& lm, const Config& 
 		romPath += lm.getPaths().getRomName();
 
 		exportSharedPalettes(romPath, config.getSharedPalettesPath(), lm.getPaths().getLmExePath());
-		Logger::log("Successfully completed OnSharedPalettesSave");
+		Logger::log_message(L"Successfully completed OnSharedPalettesSave");
 	}
 	catch (const std::runtime_error& err)
 	{
-		Logger::log("OnSuccessfulSharedPaletteSave failed with exception: %s", err.what());
+		WhatWide what{ err };
+		Logger::log_error(L"OnSuccessfulSharedPaletteSave failed with exception: \"%s\"", what.what());
 	}
 }
 
 void OnSharedPalettesSave::onFailedSharedPalettesSave(LM& lm)
 {
-	Logger::log("Failed OnSharedPalettesSave call");
+	Logger::log_error(L"Failed OnSharedPalettesSave call");
 }
 
 void OnSharedPalettesSave::exportSharedPalettes(const fs::path& sourceRom, const fs::path& sharedPalettesPath, const fs::path& lmExePath)

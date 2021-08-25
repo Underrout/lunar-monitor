@@ -19,12 +19,12 @@ void OnMap16Save::onSuccessfulMap16Save(LM& lm, const Config& config)
     romPath += lm.getPaths().getRomName();
 
     if (lm.getLevelEditor().exportMap16(lm.getPaths().getLmExePath(), romPath, config.getMap16Path()))
-        Logger::log("Successfully completed OnMap16Save");
+        Logger::log_message(L"Successfully completed OnMap16Save");
     else
-        Logger::log("Failed to export map 16 in OnMap16Save");
+        Logger::log_error(L"Failed to export map 16 in OnMap16Save");
 }
 
 void OnMap16Save::onFailedMap16Save(LM& lm)
 {
-    Logger::log("Failed OnMap16Save call");
+    Logger::log_error(L"Failed OnMap16Save call");
 }

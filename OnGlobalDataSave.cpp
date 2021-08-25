@@ -21,17 +21,18 @@ void OnGlobalDataSave::onSuccessfulGlobalDataSave(LM& lm, const Config& config)
 		romPath += lm.getPaths().getRomName();
 
 		createBpsPatch(romPath, config.getCleanRomPath(), config.getGlobalDataPath(), config.getFlipsPath());
-		Logger::log("Successfully completed OnGlobalDataSave");
+		Logger::log_message(L"Successfully completed OnGlobalDataSave");
 	}
 	catch (const std::exception& exc)
 	{
-		Logger::log("OnGlobalDataSave failed with exception: %s", exc.what());
+		WhatWide what{ exc };
+		Logger::log_error(L"OnGlobalDataSave failed with exception: \"%s\"", what.what());
 	}
 }
 
 void OnGlobalDataSave::onFailedGlobalDataSave(LM& lm)
 {
-	Logger::log("Failed OnGlobalDataSave call");
+	Logger::log_error(L"Failed OnGlobalDataSave call");
 }
 
 void OnGlobalDataSave::createBpsPatch(const fs::path& sourceRom, const fs::path& cleanRomPath, const fs::path& destinationPath, const fs::path& flipsExePath)

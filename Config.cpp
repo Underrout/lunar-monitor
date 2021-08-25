@@ -54,7 +54,7 @@ Config::Config(const fs::path& configFilePath)
 		}
 	}
 	if (std::any_of(setVariables.begin(), setVariables.end(), [](bool b) { return !b; })) {
-		Logger::log("Warning: not all config variables have been set");
+		Logger::log_warning(L"Not all config variables have been set");
 	}
 }
 
