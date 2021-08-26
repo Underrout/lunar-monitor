@@ -14,34 +14,42 @@ static inline std::string trim_whitespace_dequote(const std::string& orig) {
 
 Config::Config(const fs::path& configFilePath)
 {
+	for (auto& option : configOptions)
+	{
+		std::get<2>(option) = Set::No;
+	}
+
 	const fs::path basePath = configFilePath.parent_path();
 
 	const auto OptionNotFound = configOptions.end();
 
 	std::ifstream file(configFilePath);
-	std::string currLine;
 
-	std::array<bool, configOptions.size()> setVariables{};
+	if (!file) {
+		throw std::runtime_error("Couldn't open configuration file to read from");
+	}
+
+	std::string currLine;
 
 	while (std::getline(file, currLine))
 	{
 		if (currLine.substr(0, 2) == "--")
 			continue;
 
-		auto it = std::find_if(configOptions.begin(), configOptions.end(), [&currLine](const auto& option_tpl) {
-			const auto& [option, _] = option_tpl;
+		auto it = std::find_if(configOptions.begin(), configOptions.end(), [&currLine](const OptionTuple& option_tpl) {
+			const auto& option = std::get<0>(option_tpl);
 			return currLine.compare(0, option.size(), option) == 0;
-		});
+			});
 
 		if (it != OptionNotFound)
 		{
-			auto& [name, idx] = *it;
+			auto& [name, isoptional, isset] = *it;
 			auto varName = std::string{ name };
 			auto varVal = trim_whitespace_dequote(currLine.substr(varName.size()));
 
-			if (!setVariables[idx])
+			if (isset == Set::No)
 			{
-				setVariables[idx] = true;
+				isset = Set::Yes;
 				setConfigVar(varName, varVal, basePath);
 			}
 			else
@@ -53,8 +61,17 @@ Config::Config(const fs::path& configFilePath)
 			throw std::runtime_error("Non existing config var tried to be defined: " + currLine);
 		}
 	}
-	if (std::any_of(setVariables.begin(), setVariables.end(), [](bool b) { return !b; })) {
-		Logger::log_warning(L"Not all config variables have been set");
+	auto all_non_optional_set = std::any_of(configOptions.begin(), configOptions.end(), [](const OptionTuple& tup) {
+		auto isoptional = std::get<1>(tup);
+		auto isset = std::get<2>(tup);
+		if (isoptional == Optional::Yes)		// if it's optional we don't care if it's set or not
+			return false;
+		if (isset == Set::Yes)					// if it's not optional, we check if it's set and return appropriately
+			return false;
+		return true;
+		});
+	if (all_non_optional_set) {
+		Logger::log_warning(L"Not all required config variables have been set");
 	}
 }
 

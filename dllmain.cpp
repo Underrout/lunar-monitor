@@ -114,6 +114,11 @@ void SetConfig(const fs::path& basePath)
         Logger::log_error(L"Failed to setup configuration file, error was \"%s\"", what.what());
         config = std::nullopt;
     }
+    catch (const std::exception& exc) {
+        WhatWide what{ exc };
+        Logger::log_error(L"Uncaught exception while reading config file, error was \"%s\"", what.what());
+        config = std::nullopt;
+    }
 
 }
 

@@ -26,27 +26,37 @@ public:
 	const fs::path& getLogFilePath() const;
 	LogLevel getLogLevel() const;
 private:
-	static constexpr inline std::array<std::tuple<std::string_view, size_t>, 9> configOptions{ {
-		{"level_directory:"sv, 0},
-		{"mwl_file_format:"sv, 1},
-		{"flips_path:"sv, 2},
-		{"map16_path:"sv, 3},
-		{"clean_rom_path:"sv, 4},
-		{"global_data_path:"sv, 5},
-		{"shared_palettes_path:"sv, 6},
-		{"log_path:"sv, 7},
-		{"log_level:"sv, 8}
+	enum class Optional : bool {
+		Yes = true,
+		No = false
+	};
+	enum class Set : bool {
+		Yes = true,
+		No = false
+	};
+	using OptionTuple = std::tuple<const std::string_view, Optional, Set>;
+	
+	static inline std::array<OptionTuple, 9> configOptions{ {
+		{"level_directory:"sv, Optional::No, Set::No},
+		{"mwl_file_format:"sv, Optional::No, Set::No},
+		{"flips_path:"sv, Optional::No, Set::No},
+		{"map16_path:"sv, Optional::No, Set::No},
+		{"clean_rom_path:"sv, Optional::No, Set::No},
+		{"global_data_path:"sv, Optional::No, Set::No},
+		{"shared_palettes_path:"sv, Optional::No, Set::No},
+		{"log_path:"sv, Optional::Yes, Set::No},
+		{"log_level:"sv, Optional::Yes, Set::No}
 	}};
 
-	static constexpr const std::string_view& levelDirectoryOption = std::get<0>(configOptions[0]);
-	static constexpr const std::string_view& mwlFormatOption = std::get<0>(configOptions[1]);
-	static constexpr const std::string_view& flipsPathOption = std::get<0>(configOptions[2]);
-	static constexpr const std::string_view& map16PathOption = std::get<0>(configOptions[3]);
-	static constexpr const std::string_view& cleanRomPathOption = std::get<0>(configOptions[4]);
-	static constexpr const std::string_view& globalDataPathOption = std::get<0>(configOptions[5]);
-	static constexpr const std::string_view& sharedPalettesPathOption = std::get<0>(configOptions[6]);
-	static constexpr const std::string_view& logFilePathOption = std::get<0>(configOptions[7]);
-	static constexpr const std::string_view& logLevelOption = std::get<0>(configOptions[8]);
+	static inline const std::string_view& levelDirectoryOption = std::get<0>(configOptions[0]);
+	static inline const std::string_view& mwlFormatOption = std::get<0>(configOptions[1]);
+	static inline const std::string_view& flipsPathOption = std::get<0>(configOptions[2]);
+	static inline const std::string_view& map16PathOption = std::get<0>(configOptions[3]);
+	static inline const std::string_view& cleanRomPathOption = std::get<0>(configOptions[4]);
+	static inline const std::string_view& globalDataPathOption = std::get<0>(configOptions[5]);
+	static inline const std::string_view& sharedPalettesPathOption = std::get<0>(configOptions[6]);
+	static inline const std::string_view& logFilePathOption = std::get<0>(configOptions[7]);
+	static inline const std::string_view& logLevelOption = std::get<0>(configOptions[8]);
 
 	fs::path levelDirectory;
 	fs::path flipsPath;
