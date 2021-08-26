@@ -48,15 +48,15 @@ private:
 		{"log_level:"sv, Optional::Yes, Set::No}
 	}};
 
-	static inline const std::string_view& levelDirectoryOption = std::get<0>(configOptions[0]);
-	static inline const std::string_view& mwlFormatOption = std::get<0>(configOptions[1]);
-	static inline const std::string_view& flipsPathOption = std::get<0>(configOptions[2]);
-	static inline const std::string_view& map16PathOption = std::get<0>(configOptions[3]);
-	static inline const std::string_view& cleanRomPathOption = std::get<0>(configOptions[4]);
-	static inline const std::string_view& globalDataPathOption = std::get<0>(configOptions[5]);
-	static inline const std::string_view& sharedPalettesPathOption = std::get<0>(configOptions[6]);
-	static inline const std::string_view& logFilePathOption = std::get<0>(configOptions[7]);
-	static inline const std::string_view& logLevelOption = std::get<0>(configOptions[8]);
+	static inline const std::string_view& levelDirectoryOption = std::get<const std::string_view>(configOptions[0]);
+	static inline const std::string_view& mwlFormatOption = std::get<const std::string_view>(configOptions[1]);
+	static inline const std::string_view& flipsPathOption = std::get<const std::string_view>(configOptions[2]);
+	static inline const std::string_view& map16PathOption = std::get<const std::string_view>(configOptions[3]);
+	static inline const std::string_view& cleanRomPathOption = std::get<const std::string_view>(configOptions[4]);
+	static inline const std::string_view& globalDataPathOption = std::get<const std::string_view>(configOptions[5]);
+	static inline const std::string_view& sharedPalettesPathOption = std::get<const std::string_view>(configOptions[6]);
+	static inline const std::string_view& logFilePathOption = std::get<const std::string_view>(configOptions[7]);
+	static inline const std::string_view& logLevelOption = std::get<const std::string_view>(configOptions[8]);
 
 	fs::path levelDirectory;
 	fs::path flipsPath;

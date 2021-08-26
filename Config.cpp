@@ -16,7 +16,7 @@ Config::Config(const fs::path& configFilePath)
 {
 	for (auto& option : configOptions)
 	{
-		std::get<2>(option) = Set::No;
+		std::get<Set>(option) = Set::No;
 	}
 
 	const fs::path basePath = configFilePath.parent_path();
@@ -25,8 +25,9 @@ Config::Config(const fs::path& configFilePath)
 
 	std::ifstream file(configFilePath);
 
-	if (!file) {
-		throw std::runtime_error("Couldn't open configuration file to read from");
+	if (!file)
+	{
+		throw std::runtime_error("Couldn't open configuration file, no config file found at \"" + configFilePath.string() + "\"");
 	}
 
 	std::string currLine;
@@ -37,7 +38,7 @@ Config::Config(const fs::path& configFilePath)
 			continue;
 
 		auto it = std::find_if(configOptions.begin(), configOptions.end(), [&currLine](const OptionTuple& option_tpl) {
-			const auto& option = std::get<0>(option_tpl);
+			const auto& option = std::get<const std::string_view>(option_tpl);
 			return currLine.compare(0, option.size(), option) == 0;
 			});
 
@@ -61,16 +62,16 @@ Config::Config(const fs::path& configFilePath)
 			throw std::runtime_error("Non existing config var tried to be defined: " + currLine);
 		}
 	}
-	auto all_non_optional_set = std::any_of(configOptions.begin(), configOptions.end(), [](const OptionTuple& tup) {
-		auto isoptional = std::get<1>(tup);
-		auto isset = std::get<2>(tup);
+	auto all_non_optional_set = std::all_of(configOptions.begin(), configOptions.end(), [](const OptionTuple& tup) {
+		auto isoptional = std::get<Optional>(tup);
+		auto isset = std::get<Set>(tup);
 		if (isoptional == Optional::Yes)		// if it's optional we don't care if it's set or not
-			return false;
+			return true;
 		if (isset == Set::Yes)					// if it's not optional, we check if it's set and return appropriately
-			return false;
-		return true;
+			return true;
+		return false;
 		});
-	if (all_non_optional_set) {
+	if (!all_non_optional_set) {
 		Logger::log_warning(L"Not all required config variables have been set");
 	}
 }
