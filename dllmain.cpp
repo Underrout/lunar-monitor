@@ -92,6 +92,7 @@ BOOL NewRomFunction(DWORD a, DWORD b)
 
     if (result) 
     {
+        Logger::log_message(L"Successfully loaded new ROM");
         fs::current_path(lm.getPaths().getRomDir());
         SetConfig(lm.getPaths().getRomDir());
     }
@@ -107,6 +108,7 @@ void SetConfig(const fs::path& basePath)
     try
     {
         config = Config(configPath);
+        Logger::log_message(L"Successfully loaded config file from \"%s\"", configPath.wstring().c_str());
     }
     catch (const std::runtime_error& err)
     {
