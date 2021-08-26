@@ -88,13 +88,22 @@ void DllDetach(HMODULE hModule)
 
 BOOL NewRomFunction(DWORD a, DWORD b)
 {
+    Logger::log_message(L"Attempting to switch to new ROM");
+
     BOOL result = LMNewRomFunction(a, b);
 
     if (result) 
     {
-        Logger::log_message(L"Successfully loaded new ROM");
+        Logger::log_message(L"Successfully switched to new ROM");
+
         fs::current_path(lm.getPaths().getRomDir());
         SetConfig(lm.getPaths().getRomDir());
+
+        Logger::log_message(L"Successfully loaded new ROM");
+    }
+    else
+    {
+        Logger::log_message(L"Failed to switch to new ROM");
     }
 
     return result;
