@@ -29,7 +29,9 @@ public:
 namespace Logger {
 	LogLevel getLogLevel() noexcept;
 	void setLogLevel(LogLevel) noexcept;
+	void setDefaultLogLevel() noexcept;
 	void setLogPath(fs::path path) noexcept;
+	void setDefaultLogPath(const fs::path& prefix) noexcept;
 	const fs::path& getLogPath() noexcept;
 	void log(LogSeverity, const wchar_t* fmt, ...) noexcept;
 	void log_message(const wchar_t* fmt, ...) noexcept;

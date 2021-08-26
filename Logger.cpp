@@ -15,6 +15,7 @@
 #include <Windows.h>
 
 constexpr const wchar_t* MODULE_NAME = L"lunar-monitor.dll";
+constexpr const char* DEFAULT_LOG_FILE = "lunar_monitor_log.txt";
 
 // A simple class to format a CharT buffer with a va_list, it uses RAII to dispose of its storage
 // Doesn't require manual memory management
@@ -187,7 +188,7 @@ namespace Logger {
 		}
 
 	public:
-		TheLogger() noexcept : m_level(LogLevel::Log), m_filepath(L"lunar_monitor_log.txt"), m_file() {
+		TheLogger() noexcept : m_level(LogLevel::Log), m_filepath(DEFAULT_LOG_FILE), m_file() {
 #if TIMED_LOGGER_IMPL
 			// Flush messages to file every 10 seconds
 			auto thread_executor = [this]() {
@@ -213,13 +214,6 @@ namespace Logger {
 				}
 			};
 			EnumWindows(callback, reinterpret_cast<uintptr_t>(this));
-			std::wstringstream stream{};
-			auto t_c = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-			struct tm time_now {};
-			auto err = localtime_s(&time_now, &t_c);
-			if (err == 0)
-				stream << std::put_time(&time_now, L"Start of log: [ %F %T ]\n");
-			m_logs.push_back(stream.str());
 		}
 
 		void setLMWindowHandleImpl(HWND handle) noexcept {
@@ -227,7 +221,6 @@ namespace Logger {
 		}
 
 		void log(LogSeverity severity, const wchar_t* fmt, va_list argptr) const noexcept {
-			m_has_logged_once = true;
 			switch (m_level) {
 			case LogLevel::Warn:
 				if (severity != LogSeverity::Message && m_lm_window_handle) {
@@ -237,6 +230,8 @@ namespace Logger {
 				[[fallthrough]];
 			case LogLevel::Log:
 			{
+				m_has_logged_once = true;
+
 				FormatTempBuffer buf{ fmt, argptr };
 				auto t_c = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 				std::wstringstream stream{};
@@ -275,14 +270,34 @@ namespace Logger {
 				break;
 			}
 		}
+
 		void setLogLevel(LogLevel level) noexcept {
 			m_level = level;
+		}
+
+		void setDefaultLogLevel() noexcept {
+			m_level = LogLevel::Log;
 		}
 
 		void setLogPath(fs::path&& path) noexcept {
 			if (m_has_logged_once)
 				flush_logs_to_file();
+
+			m_has_logged_once = false;
+
 			m_filepath = std::move(path);
+		}
+
+		void setDefaultLogPath(const fs::path& prefix) noexcept {
+			if (m_has_logged_once)
+				flush_logs_to_file();
+
+			m_has_logged_once = false;
+
+			fs::path logPath = prefix;
+			logPath /= DEFAULT_LOG_FILE;
+
+			m_filepath = logPath;
 		}
 
 		LogLevel getLogLevel() const noexcept {
@@ -316,6 +331,10 @@ namespace Logger {
 		getLoggerInstance()->setLogLevel(level);
 	}
 
+	void setDefaultLogLevel() noexcept {
+		getLoggerInstance()->setDefaultLogLevel();
+	}
+
 	void log(LogSeverity severity, const wchar_t* fmt, ...) noexcept {
 		va_list lst{};
 		va_start(lst, fmt);
@@ -344,6 +363,10 @@ namespace Logger {
 
 	void setLogPath(fs::path path) noexcept {
 		getLoggerInstance()->setLogPath(std::forward<fs::path>(path));
+	}
+
+	void setDefaultLogPath(const fs::path& prefix) noexcept {
+		getLoggerInstance()->setDefaultLogPath(prefix);
 	}
 
 	const fs::path& getLogPath() noexcept {

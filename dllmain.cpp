@@ -94,12 +94,15 @@ BOOL NewRomFunction(DWORD a, DWORD b)
 
     if (result) 
     {
-        Logger::log_message(L"Successfully switched to new ROM");
+        fs::path romPath = lm.getPaths().getRomDir();
+        romPath += lm.getPaths().getRomName();
+
+        Logger::log_message(L"Successfully switched to other ROM: \"%s\", goodbye", romPath.c_str());
 
         fs::current_path(lm.getPaths().getRomDir());
         SetConfig(lm.getPaths().getRomDir());
 
-        Logger::log_message(L"Successfully loaded new ROM");
+        Logger::log_message(L"Successfully loaded ROM: \"%s\"", romPath.c_str());
     }
     else
     {
@@ -117,16 +120,43 @@ void SetConfig(const fs::path& basePath)
     try
     {
         config = Config(configPath);
+
+        Logger::log_message(L"------- START OF LOG -------");
         Logger::log_message(L"Successfully loaded config file from \"%s\"", configPath.wstring().c_str());
     }
     catch (const std::runtime_error& err)
     {
+        if (!fs::exists(configPath))
+        {
+            Logger::setLogLevel(LogLevel::Silent);
+        }
+        else
+        {
+            Logger::setDefaultLogLevel();
+        }
+
+        Logger::setDefaultLogPath(basePath);
+
         WhatWide what{ err };
+        Logger::log_message(L"------- START OF LOG -------");
         Logger::log_error(L"Failed to setup configuration file, error was \"%s\"", what.what());
         config = std::nullopt;
     }
-    catch (const std::exception& exc) {
+    catch (const std::exception& exc) 
+    {
+        if (!fs::exists(configPath))
+        {
+            Logger::setLogLevel(LogLevel::Silent);
+        }
+        else
+        {
+            Logger::setDefaultLogLevel();
+        }
+
+        Logger::setDefaultLogPath(basePath);
+
         WhatWide what{ exc };
+        Logger::log_message(L"------- START OF LOG -------");
         Logger::log_error(L"Uncaught exception while reading config file, error was \"%s\"", what.what());
         config = std::nullopt;
     }
