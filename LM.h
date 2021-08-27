@@ -3,8 +3,6 @@
 #include "Paths.h"
 #include "LevelEditor.h"
 
-#include <string>
-
 class LM
 {
 private:

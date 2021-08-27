@@ -1,80 +1,143 @@
 #include "Config.h"
 
+#include <fstream>
+#include <stdexcept>
+#include <algorithm>
+
+// trim from both ends and dequotes a string
+static inline std::string trim_whitespace_dequote(const std::string& orig) {
+	auto s{ orig };
+	s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](auto ch) { return !std::isspace(ch) && !(ch == '"'); }));
+	s.erase(std::find_if(s.rbegin(), s.rend(), [](auto ch) { return !std::isspace(ch) && !(ch == '"'); }).base(), s.end());
+	return s;
+}
+
 Config::Config(const fs::path& configFilePath)
 {
+	for (auto& option : configOptions)
+	{
+		std::get<Set>(option) = Set::No;
+	}
+
 	const fs::path basePath = configFilePath.parent_path();
 
-	std::regex configValDefinition("(level_directory|mwl_file_format|flips_path|map16_path|clean_rom_path|global_data_path|shared_palettes_path):\\s+\"(.+)\"");
+	const auto OptionNotFound = configOptions.end();
 
 	std::ifstream file(configFilePath);
-	std::string currLine;
 
-	std::unordered_set<std::string> seenVarNames{};
+	if (!file)
+	{
+		throw std::runtime_error("Couldn't open configuration file, no config file found at \"" + configFilePath.string() + "\"");
+	}
+
+	std::string currLine;
 
 	while (std::getline(file, currLine))
 	{
 		if (currLine.substr(0, 2) == "--")
 			continue;
 
-		std::smatch matchResults;
-		if (std::regex_match(currLine, matchResults, configValDefinition))
-		{
-			std::string varName = matchResults[1];
-			std::string varVal = matchResults[2];
+		auto it = std::find_if(configOptions.begin(), configOptions.end(), [&currLine](const OptionTuple& option_tpl) {
+			const auto& option = std::get<const std::string_view>(option_tpl);
+			return currLine.compare(0, option.size(), option) == 0;
+			});
 
-			if (seenVarNames.count(varName) == 0)
+		if (it != OptionNotFound)
+		{
+			auto& [name, isoptional, isset] = *it;
+			auto varName = std::string{ name };
+			auto varVal = trim_whitespace_dequote(currLine.substr(varName.size()));
+
+			if (isset == Set::No)
 			{
+				isset = Set::Yes;
 				setConfigVar(varName, varVal, basePath);
-				seenVarNames.insert(varName);
 			}
 			else
 			{
-				throw std::runtime_error("Config var redefined");
+				throw std::runtime_error("Config var \"" + varName + "\" redefined");
 			}
 		}
+		else {
+			throw std::runtime_error("Non existing config var tried to be defined: " + currLine);
+		}
+	}
+	auto all_non_optional_set = std::all_of(configOptions.begin(), configOptions.end(), [](const OptionTuple& tup) {
+		auto isoptional = std::get<Optional>(tup);
+		auto isset = std::get<Set>(tup);
+		if (isoptional == Optional::Yes)		// if it's optional we don't care if it's set or not
+			return true;
+		if (isset == Set::Yes)					// if it's not optional, we check if it's set and return appropriately
+			return true;
+		return false;
+		});
+	if (!all_non_optional_set) {
+		Logger::log_warning(L"Not all required config variables have been set");
 	}
 
-	if (seenVarNames.size() != 7)
+	if (std::get<Set>(configOptions[7]) == Set::No)
 	{
-		throw std::runtime_error("Not all config vars specified");
+		Logger::setDefaultLogPath(basePath);
+	}
+
+	if (std::get<Set>(configOptions[8]) == Set::No)
+	{
+		Logger::setDefaultLogLevel();
 	}
 }
 
 void Config::setConfigVar(const std::string& varName, const std::string& varVal, const fs::path& basePath)
 {
-	if (varName == "level_directory")
+	if (varName == levelDirectoryOption)
 	{
 		levelDirectory = basePath;
 		levelDirectory /= varVal;
 	}
-	else if (varName == "mwl_file_format")
+	else if (varName == mwlFormatOption)
 	{
 		mwlFileFormat = varVal;
 	}
-	else if (varName == "flips_path")
+	else if (varName == flipsPathOption)
 	{
 		flipsPath = basePath;
 		flipsPath /= varVal;
 	}
-	else if (varName == "map16_path")
+	else if (varName == map16PathOption)
 	{
 		map16Path = basePath;
 		map16Path /= varVal;
 	}
-	else if (varName == "clean_rom_path")
+	else if (varName == cleanRomPathOption)
 	{
 		cleanRomPath = basePath;
 		cleanRomPath /= varVal;
 	}
-	else if (varName == "shared_palettes_path")
+	else if (varName == sharedPalettesPathOption)
 	{
 		sharedPalettesPath = basePath;
 		sharedPalettesPath /= varVal;
 	}
-	else if (varName == "global_data_path")
+	else if (varName == globalDataPathOption)
 	{
 		globalDataPath = basePath;
 		globalDataPath /= varVal;
+	} 
+	else if (varName == logFilePathOption) {
+		Logger::setLogPath(basePath / varVal);
+	}
+	else if (varName == logLevelOption) {
+		if (varVal == "Warn"sv) {
+			Logger::setLogLevel(LogLevel::Warn);
+		}
+		else if (varVal == "Log"sv) {
+			Logger::setLogLevel(LogLevel::Log);
+		}
+		else if (varVal == "Silent"sv) {
+			Logger::setLogLevel(LogLevel::Silent);
+		}
+		else {
+			throw std::runtime_error("Invalid log level option, valid options are Warn, Log and Silent");
+		}
 	}
 	else
 	{
@@ -90,6 +153,16 @@ const fs::path& Config::getLevelDirectory() const
 const std::string& Config::getMwlFileFormat() const
 {
 	return mwlFileFormat;
+}
+
+const fs::path& Config::getLogFilePath() const
+{
+	return Logger::getLogPath();
+}
+
+LogLevel Config::getLogLevel() const
+{
+	return Logger::getLogLevel();
 }
 
 const fs::path& Config::getMap16Path() const

@@ -1,5 +1,7 @@
 #include "OnLevelSave.h"
 
+#include <sstream>
+
 void OnLevelSave::onLevelSave(bool succeeded, unsigned int savedLevelNumber, LM& lm, const std::optional<const Config>& config)
 {
     if (succeeded && config.has_value()) 
@@ -28,7 +30,7 @@ void OnLevelSave::onSuccessfulLevelSave(unsigned int savedLevelNumber, LM& lm, c
         while (lvlNumString.size() != 3)
             lvlNumString = "0" + lvlNumString;
 
-        mwlFileName = std::regex_replace(mwlFileName, std::regex("\\#"), lvlNumString);
+        mwlFileName = mwlFileName.substr(0, indexToInsertLvlNum) + lvlNumString + mwlFileName.substr(indexToInsertLvlNum + 1);
     }
 
     mwlPath /= mwlFileName;
@@ -36,10 +38,13 @@ void OnLevelSave::onSuccessfulLevelSave(unsigned int savedLevelNumber, LM& lm, c
     fs::path romPath = lm.getPaths().getRomDir();
     romPath += lm.getPaths().getRomName();
 
-    lm.getLevelEditor().exportMwl(lm.getPaths().getLmExePath(), romPath, mwlPath, savedLevelNumber);
+    if (lm.getLevelEditor().exportMwl(lm.getPaths().getLmExePath(), romPath, mwlPath, savedLevelNumber))
+        Logger::log_message(L"Successfully exported level to \"%s\"", mwlPath.c_str());
+    else
+        Logger::log_error(L"Failed to export level");
 }
 
 void OnLevelSave::onFailedLevelSave(unsigned int savedLevelNumber, LM& lm)
 {
-
+    Logger::log_error(L"Saving level to ROM failed");
 }

@@ -1,23 +1,7 @@
-// dllmain.cpp : Defines the entry point for the DLL application.
-
-#define CONFIG_FILE_PATH "lunar-monitor-config.txt"
-
-#include "pch.h"
-
 #include <Windows.h>
 #include <detours.h>
 
 #include <iostream>
-#include <cstdint>
-
-#include <string>
-#include <sstream>
-
-#include <optional>
-#include <filesystem>
-
-namespace fs = std::filesystem;
-
 #include "OnLevelSave.h"
 #include "OnMap16Save.h"
 #include "OnGlobalDataSave.h"
@@ -26,6 +10,8 @@ namespace fs = std::filesystem;
 #include "LMFunctions.h"
 #include "LM.h"
 #include "Config.h"
+
+constexpr const char* CONFIG_FILE_PATH = "lunar-monitor-config.txt";
 
 std::optional<Config> config = std::nullopt;
 LM lm{};
@@ -38,13 +24,13 @@ BOOL SaveCreditsFunction();
 BOOL SaveTitlescreenFunction();
 BOOL SaveSharedPalettesFunction(BOOL x);
 
-saveLevelFunction LMSaveLevelFunction = (saveLevelFunction)(LM_LEVEL_SAVE_FUNCTION);
-saveMap16Function LMSaveMap16Function = (saveMap16Function)(LM_MAP16_SAVE_FUNCTION);
-saveOWFunction LMSaveOWFunction = (saveOWFunction)(LM_OW_SAVE_FUNCTION);
-newRomFunction LMNewRomFunction = (newRomFunction)(LM_NEW_ROM_FUNCTION);
-saveCreditsFunction LMSaveCreditsFunction = (saveCreditsFunction)(LM_CREDITS_SAVE_FUNCTION);
-saveTitlescreenFunction LMSaveTitlescreenFunction = (saveTitlescreenFunction)(LM_TITLESCREEN_SAVE_FUNCTION);
-saveSharedPalettesFunction LMSaveSharedPalettesFunction = (saveSharedPalettesFunction)(LM_SHARED_PALETTES_SAVE_FUNCTION);
+auto LMSaveLevelFunction = AddressToFnPtr<saveLevelFunction>(LM_LEVEL_SAVE_FUNCTION);
+auto LMSaveMap16Function = AddressToFnPtr<saveMap16Function>(LM_MAP16_SAVE_FUNCTION);
+auto LMSaveOWFunction = AddressToFnPtr<saveOWFunction>(LM_OW_SAVE_FUNCTION);
+auto LMNewRomFunction = AddressToFnPtr<newRomFunction>(LM_NEW_ROM_FUNCTION);
+auto LMSaveCreditsFunction = AddressToFnPtr<saveCreditsFunction>(LM_CREDITS_SAVE_FUNCTION);
+auto LMSaveTitlescreenFunction = AddressToFnPtr<saveTitlescreenFunction>(LM_TITLESCREEN_SAVE_FUNCTION);
+auto LMSaveSharedPalettesFunction = AddressToFnPtr<saveSharedPalettesFunction>(LM_SHARED_PALETTES_SAVE_FUNCTION);
 
 void DllAttach(HMODULE hModule);
 void DllDetach(HMODULE hModule);
@@ -59,11 +45,11 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
             DllAttach(hModule);
             break;
         case DLL_THREAD_ATTACH:
+            break;
+        case DLL_PROCESS_DETACH:
             DllDetach(hModule);
             break;
         case DLL_THREAD_DETACH:
-            break;
-        case DLL_PROCESS_DETACH:
             break;
     }
     return TRUE;
@@ -102,12 +88,25 @@ void DllDetach(HMODULE hModule)
 
 BOOL NewRomFunction(DWORD a, DWORD b)
 {
+    Logger::log_message(L"Attempting to switch to new ROM");
+
     BOOL result = LMNewRomFunction(a, b);
 
     if (result) 
     {
+        fs::path romPath = lm.getPaths().getRomDir();
+        romPath += lm.getPaths().getRomName();
+
+        Logger::log_message(L"Successfully switched to other ROM: \"%s\", goodbye", romPath.c_str());
+
         fs::current_path(lm.getPaths().getRomDir());
         SetConfig(lm.getPaths().getRomDir());
+
+        Logger::log_message(L"Successfully loaded ROM: \"%s\"", romPath.c_str());
+    }
+    else
+    {
+        Logger::log_message(L"Failed to switch to new ROM");
     }
 
     return result;
@@ -121,9 +120,44 @@ void SetConfig(const fs::path& basePath)
     try
     {
         config = Config(configPath);
+
+        Logger::log_message(L"------- START OF LOG -------");
+        Logger::log_message(L"Successfully loaded config file from \"%s\"", configPath.wstring().c_str());
     }
-    catch (const std::exception&)
+    catch (const std::runtime_error& err)
     {
+        if (!fs::exists(configPath))
+        {
+            Logger::setLogLevel(LogLevel::Silent);
+        }
+        else
+        {
+            Logger::setDefaultLogLevel();
+        }
+
+        Logger::setDefaultLogPath(basePath);
+
+        WhatWide what{ err };
+        Logger::log_message(L"------- START OF LOG -------");
+        Logger::log_error(L"Failed to setup configuration file, error was \"%s\"", what.what());
+        config = std::nullopt;
+    }
+    catch (const std::exception& exc) 
+    {
+        if (!fs::exists(configPath))
+        {
+            Logger::setLogLevel(LogLevel::Silent);
+        }
+        else
+        {
+            Logger::setDefaultLogLevel();
+        }
+
+        Logger::setDefaultLogPath(basePath);
+
+        WhatWide what{ exc };
+        Logger::log_message(L"------- START OF LOG -------");
+        Logger::log_error(L"Uncaught exception while reading config file, error was \"%s\"", what.what());
         config = std::nullopt;
     }
 

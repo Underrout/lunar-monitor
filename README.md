@@ -65,6 +65,8 @@ map16_path: "Other/all.map16"
 clean_rom_path: "../SMW_clean.smc"
 global_data_path: "Other/global_data.bps"
 shared_palettes_path: "Other/shared.pal"
+log_level: Log
+log_path: "Other/lunar-monitor-log.txt"
 ```
 
 These should be relatively self explanatory, especially if you have used Lunar Helper before.
@@ -85,7 +87,13 @@ All paths are relative to the directory the configuration file and your ROM are 
 
 `shared_palettes_path` specifies the path the shared palette .pal should be exported to. This should be the same as the `shared_palette` variable from Lunar Helper.
 
+`log_level` specifies the type of logging that's gonna be done by the tool. There are 3 possible logging levels: Warn, Log and Silent. Warn is the noisiest one, which will pop up a message box when a warning/error is issued and log everything else to file, Log will just log everything else to a file while Silent will ignore everything.
+
+`log_path` specifies the path where the logging messages will be written to.
+
 Make sure you specify all the configuration variables correctly or Lunar Monitor won't export resources reliably. 
+
+The last 2 configuration variables (`log_path` and `log_level`) can be omitted. If omitted `log_level` will default to Log and `log_path` will default to a file named `lunar_monitor_log.txt` in the same folder as your ROM.
 
 That should be it. Open your Lunar Magic executable, save a level, map16, shared palettes, etc. and you should see your resources automatically be extracted to the specified directories. You can use this Lunar Magic executable as you would any other program, you can make shortcuts to it, pin it to your taskbar, create a file association for it, etc. and Lunar Monitor should still work correctly.
 
