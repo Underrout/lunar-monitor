@@ -21,18 +21,18 @@ void OnSharedPalettesSave::onSuccessfulSharedPalettesSave(LM& lm, const Config& 
 		romPath += lm.getPaths().getRomName();
 
 		exportSharedPalettes(romPath, config.getSharedPalettesPath(), lm.getPaths().getLmExePath());
-		Logger::log_message(L"Successfully completed OnSharedPalettesSave");
+		Logger::log_message(L"Successfully exported shared palettes to \"%s\"", config.getSharedPalettesPath().c_str());
 	}
 	catch (const std::runtime_error& err)
 	{
 		WhatWide what{ err };
-		Logger::log_error(L"OnSuccessfulSharedPaletteSave failed with exception: \"%s\"", what.what());
+		Logger::log_error(L"Exporting shared palettes failed with exception: \"%s\"", what.what());
 	}
 }
 
 void OnSharedPalettesSave::onFailedSharedPalettesSave(LM& lm)
 {
-	Logger::log_error(L"Failed OnSharedPalettesSave call");
+	Logger::log_error(L"Saving shared palettes to ROM failed");
 }
 
 void OnSharedPalettesSave::exportSharedPalettes(const fs::path& sourceRom, const fs::path& sharedPalettesPath, const fs::path& lmExePath)
@@ -54,7 +54,7 @@ void OnSharedPalettesSave::exportSharedPalettes(const fs::path& sourceRom, const
 
 	if (!CreateProcess(NULL, buf.data(), NULL, NULL, false, 0, NULL, NULL, &si, &pi))
 	{
-		throw std::runtime_error("Failed to export shared palettes");
+		throw std::runtime_error("Failed to create Lunar Magic process to export shared palettes");
 	}
 
 	WaitForSingleObject(pi.hProcess, INFINITE);
@@ -68,7 +68,7 @@ void OnSharedPalettesSave::exportSharedPalettes(const fs::path& sourceRom, const
 
 	if (exitCode != 0)
 	{
-		throw std::runtime_error("Failed to export shared palettes");
+		throw std::runtime_error("Lunar Magic failed to export shared palettes");
 	}
 }
 

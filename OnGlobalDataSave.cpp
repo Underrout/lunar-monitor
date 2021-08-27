@@ -21,18 +21,18 @@ void OnGlobalDataSave::onSuccessfulGlobalDataSave(LM& lm, const Config& config)
 		romPath += lm.getPaths().getRomName();
 
 		createBpsPatch(romPath, config.getCleanRomPath(), config.getGlobalDataPath(), config.getFlipsPath());
-		Logger::log_message(L"Successfully completed OnGlobalDataSave");
+		Logger::log_message(L"Successfully exported global data to \"%s\"", config.getGlobalDataPath().c_str());
 	}
 	catch (const std::exception& exc)
 	{
 		WhatWide what{ exc };
-		Logger::log_error(L"OnGlobalDataSave failed with exception: \"%s\"", what.what());
+		Logger::log_error(L"Global data export failed with exception: \"%s\"", what.what());
 	}
 }
 
 void OnGlobalDataSave::onFailedGlobalDataSave(LM& lm)
 {
-	Logger::log_error(L"Failed OnGlobalDataSave call");
+	Logger::log_error(L"Saving global data to ROM failed");
 }
 
 void OnGlobalDataSave::createBpsPatch(const fs::path& sourceRom, const fs::path& cleanRomPath, const fs::path& destinationPath, const fs::path& flipsExePath)
@@ -56,7 +56,7 @@ void OnGlobalDataSave::createBpsPatch(const fs::path& sourceRom, const fs::path&
 
 	if (!CreateProcess(NULL, buf.data(), NULL, NULL, false, 0, NULL, NULL, &si, &pi))
 	{
-		throw std::runtime_error("Failed to create bps patch");
+		throw std::runtime_error("Failed to create FLIPS process");
 	}
 
 	WaitForSingleObject(pi.hProcess, INFINITE);
@@ -70,6 +70,6 @@ void OnGlobalDataSave::createBpsPatch(const fs::path& sourceRom, const fs::path&
 
 	if (exitCode != 0)
 	{
-		throw std::runtime_error("Failed to create bps patch");
+		throw std::runtime_error("FLIPS failed to create bps patch");
 	}
 }
