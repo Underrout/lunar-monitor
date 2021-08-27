@@ -157,7 +157,6 @@ namespace Logger {
 		LogLevel m_level;
 		mutable std::wofstream m_file;
 		fs::path m_filepath;
-		HWND m_lm_window_handle = nullptr;
 		mutable std::vector<std::wstring> m_logs;
 #if TIMED_LOGGER_IMPL
 		std::thread m_thread;
@@ -201,31 +200,14 @@ namespace Logger {
 			};
 			m_thread = std::thread{ thread_executor };
 #endif
-			auto callback = [](_In_ HWND hwnd, _In_ LPARAM lparam) -> BOOL {
-				TheLogger* logger = static_cast<TheLogger*>(reinterpret_cast<void*>(lparam));
-				DWORD other_proc_id{ 0 };
-				GetWindowThreadProcessId(hwnd, &other_proc_id);
-				if (other_proc_id == GetCurrentProcessId()) {
-					logger->setLMWindowHandleImpl(hwnd);
-					return FALSE;
-				}
-				else {
-					return TRUE;
-				}
-			};
-			EnumWindows(callback, reinterpret_cast<uintptr_t>(this));
-		}
-
-		void setLMWindowHandleImpl(HWND handle) noexcept {
-			m_lm_window_handle = handle;
 		}
 
 		void log(LogSeverity severity, const wchar_t* fmt, va_list argptr) const noexcept {
 			switch (m_level) {
 			case LogLevel::Warn:
-				if (severity != LogSeverity::Message && m_lm_window_handle) {
+				if (severity != LogSeverity::Message) {
 					FormatTempBuffer msgbuf{ fmt, argptr };
-					MessageBoxW(m_lm_window_handle, msgbuf.buffer(), L"Lunar Monitor Warning", MB_OK | MB_ICONWARNING | MB_APPLMODAL);
+					MessageBoxW(NULL, msgbuf.buffer(), L"Lunar Monitor Warning", MB_OK | MB_ICONWARNING | MB_APPLMODAL);
 				}
 				[[fallthrough]];
 			case LogLevel::Log:
