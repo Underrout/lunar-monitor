@@ -1,5 +1,7 @@
 # Lunar Monitor
 
+**NOTE:** Currently does **not** work with Lunar Magic 3.31 (or any version other than 3.30, probably). Please either use 3.30 or don't use this tool at all for the time being.
+
 **DISCLAIMER:** I cannot guarantee that using this program will not corrupt your ROM data or export corrupted data. I have tested all functionality and not had any issues but considering I am hijacking a program whose internals I do not fully understand (Lunar Magic) there is always potential for something to go wrong so keep that in mind if you want to use this tool.
 
 Allows for automatic exporting of resources (levels, map16, shared palettes, overworld/title screen/credits) while using Lunar Magic to edit Super Mario World ROMs.
