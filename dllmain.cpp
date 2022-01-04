@@ -16,7 +16,7 @@ constexpr const char* CONFIG_FILE_PATH = "lunar-monitor-config.txt";
 std::optional<Config> config = std::nullopt;
 LM lm{};
 
-BOOL SaveLevelFunction(DWORD x);
+BOOL SaveLevelFunction(DWORD x, DWORD y);
 BOOL SaveMap16Function();
 BOOL SaveOWFunction();
 BOOL NewRomFunction(DWORD a, DWORD b);
@@ -163,9 +163,9 @@ void SetConfig(const fs::path& basePath)
 
 }
 
-BOOL SaveLevelFunction(DWORD x)
+BOOL SaveLevelFunction(DWORD x, DWORD y)
 {
-    BOOL succeeded = LMSaveLevelFunction(x);
+    BOOL succeeded = LMSaveLevelFunction(x, y);
 
     OnLevelSave::onLevelSave(succeeded, lm.getLevelEditor().getLevelNumberBeingSaved(), lm, config);
 

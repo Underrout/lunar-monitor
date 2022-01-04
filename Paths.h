@@ -2,9 +2,9 @@
 
 #include <cstdint>
 
-constexpr uintptr_t LM_CURR_ROM_NAME = 0x5c0030;
-constexpr uintptr_t LM_CURR_ROM_PATH = 0x7b5ff8;
-constexpr uintptr_t LM_EXE_PATH = 0x592438;
+constexpr uintptr_t LM_CURR_ROM_NAME = 0x5C6B98;
+constexpr uintptr_t LM_CURR_ROM_PATH = 0x7BD990;
+constexpr uintptr_t LM_EXE_PATH = 0x598478;
 
 class Paths
 {
