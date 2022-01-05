@@ -1,6 +1,6 @@
 # Lunar Monitor
 
-**NOTE:** Currently does **not** work with Lunar Magic 3.31 (or any version other than 3.30, probably). Please either use 3.30 or don't use this tool at all for the time being.
+**NOTE:** Currently this tool only works with Lunar Magic 3.30 and 3.31 (there are two separate versions available).
 
 **DISCLAIMER:** I cannot guarantee that using this program will not corrupt your ROM data or export corrupted data. I have tested all functionality and not had any issues but considering I am hijacking a program whose internals I do not fully understand (Lunar Magic) there is always potential for something to go wrong so keep that in mind if you want to use this tool.
 
@@ -35,7 +35,7 @@ Currently not planning on fixing this because I have no easy way to tell whether
 
 It's possible operating systems and/or antivirus software may flag this as malware since DLL injection is sometimes used by malicious software. If you are concerned about this, feel free to look through the source code, which is completely public, and build the binaries from it yourself instead of using binaries I provide directly (which, to be clear, are built from the exact same source code and only provided for convenience).
 
-I'm not sure if Lunar Monitor will work with older or future Lunar Magic versions, since addresses may move around. The Lunar Magic version I worked off of and tested with is 3.30 and I can't guarantee that any other version will work correctly, in fact they probably won't, so please keep that in mind.
+Lunar Monitor will very likely **not** work with older or future Lunar Magic versions, since addresses may move around. The Lunar Magic versions I worked off of and tested with are 3.30 and 3.31.
 
 ## Building
 
@@ -45,7 +45,7 @@ The relevant generated binary files will be `lunar-monitor-injector.exe` and `lu
 
 ## Setup
 
-NOTE: If you want to use this with Lunar Helper, ideally you should use [this fork](https://github.com/Underrout/LunarHelper) which removes the "Save" function, since it's not needed if you're using Lunar Monitor.
+NOTE: If you want to use this with Lunar Helper, ideally you should use [this fork](https://github.com/Underrout/LunarHelper/releases/tag/v1.0.0-lmc) which removes the "Save" function, since it's not needed if you're using Lunar Monitor.
 
 Also please be aware of the current [limitations](https://github.com/Underrout/lunar-monitor#limitations).
 
@@ -104,7 +104,7 @@ That should be it. Open your Lunar Magic executable, save a level, map16, shared
 If it doesn't seem to be working, please double check that:
 - all the paths in your `lunar-monitor-config.txt` are correct
 - you're actually using the Lunar Magic executable that's in the same folder as `lunar-monitor-injector.exe`, `lunar-monitor.dll` and `usertoolbar.txt`
-- you're using Lunar Magic 3.30
+- you're using Lunar Magic 3.30 or 3.31 and have the correct version of the tool for your Lunar Magic version
 
 If you're certain everything's set up correctly and it's still not working please feel free to [open an issue](https://github.com/Underrout/lunar-monitor/issues/new) and let me know what isn't working as expected.
 
