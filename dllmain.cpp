@@ -199,6 +199,9 @@ BOOL SaveOWFunction()
 
 BOOL SaveTitlescreenFunction()
 {
+    __asm {
+        mov eax,edi
+    }
     BOOL succeeded = LMSaveTitlescreenFunction();
 
     OnGlobalDataSave::onGlobalDataSave(succeeded, lm, config);
