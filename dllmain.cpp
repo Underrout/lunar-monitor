@@ -175,16 +175,10 @@ BOOL SaveLevelFunction(DWORD x, DWORD y)
 BOOL SaveMap16Function()
 {
     __asm {
-        push ebp
-        mov ebp,edi
-        mov eax,edi
+        mov eax,ebx
     }
 
     BOOL succeeded = LMSaveMap16Function();
-
-    __asm {
-        pop ebp
-    }
 
     OnMap16Save::onMap16Save(succeeded, lm, config);
 
