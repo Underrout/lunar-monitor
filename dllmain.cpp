@@ -220,7 +220,13 @@ BOOL SaveCreditsFunction()
 
 BOOL SaveSharedPalettesFunction(BOOL x)
 {
-    BOOL succeeded = LMSaveSharedPalettesFunction(x);
+    BOOL succeeded;
+    __asm {
+        mov eax,esi
+        push x
+        call LMSaveSharedPalettesFunction
+        mov succeeded,eax
+    }
 
     OnSharedPalettesSave::onSharedPalettesSave(succeeded, lm, config);
 
