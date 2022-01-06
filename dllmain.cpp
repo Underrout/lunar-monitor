@@ -187,6 +187,9 @@ BOOL SaveMap16Function()
 
 BOOL SaveOWFunction()
 {
+    __asm {
+        mov eax,[ebp]
+    }
     BOOL succeeded = LMSaveOWFunction();
 
     OnGlobalDataSave::onGlobalDataSave(succeeded, lm, config);
