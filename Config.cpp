@@ -75,12 +75,12 @@ Config::Config(const fs::path& configFilePath)
 		Logger::log_warning(L"Not all required config variables have been set");
 	}
 
-	if (std::get<Set>(configOptions[7]) == Set::No)
+	if (std::get<Set>(configOptions[8]) == Set::No)
 	{
 		Logger::setDefaultLogPath(basePath);
 	}
 
-	if (std::get<Set>(configOptions[8]) == Set::No)
+	if (std::get<Set>(configOptions[9]) == Set::No)
 	{
 		Logger::setDefaultLogLevel();
 	}
