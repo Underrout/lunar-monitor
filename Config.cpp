@@ -75,12 +75,12 @@ Config::Config(const fs::path& configFilePath)
 		Logger::log_warning(L"Not all required config variables have been set");
 	}
 
-	if (std::get<Set>(configOptions[7]) == Set::No)
+	if (std::get<Set>(configOptions[8]) == Set::No)
 	{
 		Logger::setDefaultLogPath(basePath);
 	}
 
-	if (std::get<Set>(configOptions[8]) == Set::No)
+	if (std::get<Set>(configOptions[9]) == Set::No)
 	{
 		Logger::setDefaultLogLevel();
 	}
@@ -116,6 +116,12 @@ void Config::setConfigVar(const std::string& varName, const std::string& varVal,
 	{
 		sharedPalettesPath = basePath;
 		sharedPalettesPath /= varVal;
+	}
+	else if (varName == humanReadableMap16ExecutableOption)
+	{
+		fs::path path = basePath;
+		path /= varVal;
+		humanReadableMap16ExecutablePath = path;
 	}
 	else if (varName == globalDataPathOption)
 	{
@@ -188,4 +194,9 @@ const fs::path& Config::getCleanRomPath() const
 const fs::path& Config::getSharedPalettesPath() const
 {
 	return sharedPalettesPath;
+}
+
+const std::optional<const fs::path> Config::getHumanReadableMap16ExecutablePath() const
+{
+	return humanReadableMap16ExecutablePath;
 }

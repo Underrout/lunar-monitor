@@ -18,8 +18,5 @@ public:
 		const fs::path& lmExePath, const fs::path& romPath,
 		const fs::path& mwlFilePath, unsigned int levelNumber
 	);
-	static bool exportMap16(
-		const fs::path& lmExePath, const fs::path& romPath,
-		const fs::path& map16Path
-	);
+	static bool exportMap16(const fs::path& map16Path);
 };
