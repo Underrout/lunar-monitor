@@ -22,6 +22,9 @@ using saveCreditsFunction = BOOL(*)();
 constexpr uintptr_t LM_SHARED_PALETTES_SAVE_FUNCTION = 0x451630;
 using saveSharedPalettesFunction = BOOL(*)(BOOL x);
 
+constexpr uintptr_t LM_EXPORT_ALL_MAP16_FUNCTION = 0x4CEF60;
+using export_all_map16_function = BOOL(*)(DWORD x, const char* full_output_path);
+
 template <typename T>
 constexpr T AddressToFnPtr(const uintptr_t address) {
 	return reinterpret_cast<T>(address);
