@@ -4,6 +4,7 @@
 #include <string>
 #include <array>
 #include <tuple>
+#include <optional>
 #include "Logger.h"
 
 namespace fs = std::filesystem;
@@ -23,6 +24,7 @@ public:
 	const fs::path& getSharedPalettesPath() const;
 	const fs::path& getGlobalDataPath() const;
 	const std::string& getMwlFileFormat() const;
+	const std::optional<const fs::path> getHumanReadableMap16ExecutablePath() const;
 	const fs::path& getLogFilePath() const;
 	LogLevel getLogLevel() const;
 private:
@@ -36,7 +38,7 @@ private:
 	};
 	using OptionTuple = std::tuple<const std::string_view, Optional, Set>;
 	
-	static inline std::array<OptionTuple, 9> configOptions{ {
+	static inline std::array<OptionTuple, 10> configOptions{ {
 		{"level_directory:"sv, Optional::No, Set::No},
 		{"mwl_file_format:"sv, Optional::No, Set::No},
 		{"flips_path:"sv, Optional::No, Set::No},
@@ -44,6 +46,7 @@ private:
 		{"clean_rom_path:"sv, Optional::No, Set::No},
 		{"global_data_path:"sv, Optional::No, Set::No},
 		{"shared_palettes_path:"sv, Optional::No, Set::No},
+		{"human_readable_map16_exe_path:"sv, Optional::Yes, Set::No},
 		{"log_path:"sv, Optional::Yes, Set::No},
 		{"log_level:"sv, Optional::Yes, Set::No}
 	}};
@@ -55,14 +58,16 @@ private:
 	static inline const std::string_view& cleanRomPathOption = std::get<const std::string_view>(configOptions[4]);
 	static inline const std::string_view& globalDataPathOption = std::get<const std::string_view>(configOptions[5]);
 	static inline const std::string_view& sharedPalettesPathOption = std::get<const std::string_view>(configOptions[6]);
-	static inline const std::string_view& logFilePathOption = std::get<const std::string_view>(configOptions[7]);
-	static inline const std::string_view& logLevelOption = std::get<const std::string_view>(configOptions[8]);
+	static inline const std::string_view& humanReadableMap16ExecutableOption = std::get<const std::string_view>(configOptions[7]);
+	static inline const std::string_view& logFilePathOption = std::get<const std::string_view>(configOptions[8]);
+	static inline const std::string_view& logLevelOption = std::get<const std::string_view>(configOptions[9]);
 
 	fs::path levelDirectory;
 	fs::path flipsPath;
 	fs::path map16Path;
 	fs::path cleanRomPath;
 	fs::path sharedPalettesPath;
+	std::optional<fs::path> humanReadableMap16ExecutablePath = std::nullopt;
 	fs::path globalDataPath;
 	std::string mwlFileFormat;
 
