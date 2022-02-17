@@ -117,6 +117,12 @@ void Config::setConfigVar(const std::string& varName, const std::string& varVal,
 		sharedPalettesPath = basePath;
 		sharedPalettesPath /= varVal;
 	}
+	else if (varName == humanReadableMap16ExecutableOption)
+	{
+		fs::path path = basePath;
+		path /= varVal;
+		humanReadableMap16ExecutablePath = path;
+	}
 	else if (varName == globalDataPathOption)
 	{
 		globalDataPath = basePath;
@@ -188,4 +194,9 @@ const fs::path& Config::getCleanRomPath() const
 const fs::path& Config::getSharedPalettesPath() const
 {
 	return sharedPalettesPath;
+}
+
+const std::optional<const fs::path> Config::getHumanReadableMap16ExecutablePath() const
+{
+	return humanReadableMap16ExecutablePath;
 }
