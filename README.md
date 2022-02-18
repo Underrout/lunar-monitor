@@ -69,6 +69,7 @@ map16_path: "Other/all.map16"
 clean_rom_path: "../SMW_clean.smc"
 global_data_path: "Other/global_data.bps"
 shared_palettes_path: "Other/shared.pal"
+human_readable_map16_cli_path: "../Tools/human-readable-map16-cli.exe"
 log_level: Log
 log_path: "Other/lunar-monitor-log.txt"
 ```
@@ -90,6 +91,8 @@ All paths are relative to the directory the configuration file and your ROM are 
 `global_data_path` specifies the path the global data .bps patch should be exported to. This patch will contain the overworld, title screen, credits and global exanimation data from your ROM. The path should be the same as the `global_data` variable from Lunar Helper.
 
 `shared_palettes_path` specifies the path the shared palette .pal should be exported to. This should be the same as the `shared_palette` variable from Lunar Helper.
+
+`human_readable_map16_cli_path` specifies the path to a [Human Readable Map16 Conversion Executable](https://github.com/Underrout/human-readable-map16-cli). This value is optional, if it is present, this executable will be used to convert the map16 file exported to `map16_path` into a human readable text format. These text files will be output into a directory with the same name as the .map16 file, but with the .map16 extension stripped. The directory will be in the same location as the .map16 file. The .map16 file will **not** automatically be deleted after conversion.
 
 `log_level` specifies the type of logging that's gonna be done by the tool. There are 3 possible logging levels: Warn, Log and Silent. Warn is the noisiest one, which will pop up a message box when a warning/error is issued and log everything else to file, Log will just log everything else to a file while Silent will ignore everything.
 
