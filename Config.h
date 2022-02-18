@@ -46,7 +46,7 @@ private:
 		{"clean_rom_path:"sv, Optional::No, Set::No},
 		{"global_data_path:"sv, Optional::No, Set::No},
 		{"shared_palettes_path:"sv, Optional::No, Set::No},
-		{"human_readable_map16_exe_path:"sv, Optional::Yes, Set::No},
+		{"human_readable_map16_cli_path:"sv, Optional::Yes, Set::No},
 		{"log_path:"sv, Optional::Yes, Set::No},
 		{"log_level:"sv, Optional::Yes, Set::No}
 	}};
