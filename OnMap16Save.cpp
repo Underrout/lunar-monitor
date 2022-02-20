@@ -20,11 +20,15 @@ void OnMap16Save::onSuccessfulMap16Save(LM& lm, const Config& config)
     if (lm.getLevelEditor().exportMap16(config.getMap16Path()))
     {
         if (config.getHumanReadableMap16ExecutablePath().has_value()) {
+			fs::path export_path;
+			if (config.getHumanReadableMap16DirectoryPath().has_value()) {
+				export_path = config.getHumanReadableMap16DirectoryPath().value();
+			} else {
+				size_t extension = config.getMap16Path().string().find_last_of(".");
+				export_path = config.getMap16Path().string().substr(0, extension);
+			}
+
 			std::wstringstream ws;
-
-			size_t extension = config.getMap16Path().string().find_last_of(".");
-			fs::path export_path = config.getMap16Path().string().substr(0, extension);
-
 			ws << config.getHumanReadableMap16ExecutablePath().value() << " --from-map16 " << 
 				config.getMap16Path() << " " << export_path;
 
