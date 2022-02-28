@@ -10,6 +10,8 @@ NOTE: Only tested on Windows, may not work on other operating systems.
 
 For setup see [Setup](https://github.com/Underrout/lunar-monitor#setup).
 
+**WARNING: Certain overly sensitive antivirus software (i.e. Vipre) may quarantine/block Lunar Monitor. This is a false positive. The program uses techniques that are sometimes used by viruses but is not malicious. You can convince yourself by reading the source code which is freely available here. Please ensure antivirus software is not interfering with Lunar Monitor it may not work correctly.** 
+
 ## Why is this a thing?
 
 Projects using git in combination with the convenient [Lunar Helper](https://github.com/MaddyThorson/LunarHelper) build system will likely experience the issue that git will sometimes spot "changes" in files generated via Lunar Helper's "Save" function that didn't really occur. Most often this seems to happen with level files, which appear as "modified" after each "Save" operation (at least for me).
