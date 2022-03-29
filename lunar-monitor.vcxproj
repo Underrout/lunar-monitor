@@ -170,6 +170,7 @@
     <ClInclude Include="OnMap16Save.h" />
     <ClInclude Include="OnSharedPalettesSave.h" />
     <ClInclude Include="Paths.h" />
+    <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Config.cpp" />
@@ -182,6 +183,12 @@
     <ClCompile Include="OnMap16Save.cpp" />
     <ClCompile Include="OnSharedPalettesSave.cpp" />
     <ClCompile Include="Paths.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="lunar-monitor.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="bitmap1.bmp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

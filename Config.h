@@ -23,7 +23,6 @@ public:
 	const fs::path& getCleanRomPath() const;
 	const fs::path& getSharedPalettesPath() const;
 	const fs::path& getGlobalDataPath() const;
-	const std::string& getMwlFileFormat() const;
 	const std::optional<const fs::path> getHumanReadableMap16ExecutablePath() const;
 	const std::optional<const fs::path> getHumanReadableMap16DirectoryPath() const;
 	const fs::path& getLogFilePath() const;
@@ -41,7 +40,6 @@ private:
 	
 	static inline std::array<OptionTuple, 11> configOptions{ {
 		{"level_directory:"sv, Optional::No, Set::No},
-		{"mwl_file_format:"sv, Optional::No, Set::No},
 		{"flips_path:"sv, Optional::No, Set::No},
 		{"map16_path:"sv, Optional::No, Set::No},
 		{"clean_rom_path:"sv, Optional::No, Set::No},
@@ -54,16 +52,15 @@ private:
 	}};
 
 	static inline const std::string_view& levelDirectoryOption = std::get<const std::string_view>(configOptions[0]);
-	static inline const std::string_view& mwlFormatOption = std::get<const std::string_view>(configOptions[1]);
-	static inline const std::string_view& flipsPathOption = std::get<const std::string_view>(configOptions[2]);
-	static inline const std::string_view& map16PathOption = std::get<const std::string_view>(configOptions[3]);
-	static inline const std::string_view& cleanRomPathOption = std::get<const std::string_view>(configOptions[4]);
-	static inline const std::string_view& globalDataPathOption = std::get<const std::string_view>(configOptions[5]);
-	static inline const std::string_view& sharedPalettesPathOption = std::get<const std::string_view>(configOptions[6]);
-	static inline const std::string_view& humanReadableMap16ExecutableOption = std::get<const std::string_view>(configOptions[7]);
-	static inline const std::string_view& humanReadableMap16DirectoryOption = std::get<const std::string_view>(configOptions[8]);
-	static inline const std::string_view& logFilePathOption = std::get<const std::string_view>(configOptions[9]);
-	static inline const std::string_view& logLevelOption = std::get<const std::string_view>(configOptions[10]);
+	static inline const std::string_view& flipsPathOption = std::get<const std::string_view>(configOptions[1]);
+	static inline const std::string_view& map16PathOption = std::get<const std::string_view>(configOptions[2]);
+	static inline const std::string_view& cleanRomPathOption = std::get<const std::string_view>(configOptions[3]);
+	static inline const std::string_view& globalDataPathOption = std::get<const std::string_view>(configOptions[4]);
+	static inline const std::string_view& sharedPalettesPathOption = std::get<const std::string_view>(configOptions[5]);
+	static inline const std::string_view& humanReadableMap16ExecutableOption = std::get<const std::string_view>(configOptions[6]);
+	static inline const std::string_view& humanReadableMap16DirectoryOption = std::get<const std::string_view>(configOptions[7]);
+	static inline const std::string_view& logFilePathOption = std::get<const std::string_view>(configOptions[8]);
+	static inline const std::string_view& logLevelOption = std::get<const std::string_view>(configOptions[9]);
 
 	fs::path levelDirectory;
 	fs::path flipsPath;
@@ -73,7 +70,6 @@ private:
 	std::optional<fs::path> humanReadableMap16ExecutablePath = std::nullopt;
 	std::optional<fs::path> humanReadableMap16DirectoryPath = std::nullopt;
 	fs::path globalDataPath;
-	std::string mwlFileFormat;
 
 	void setConfigVar(const std::string& varName, const std::string& varVal, const fs::path& basePath);
 };

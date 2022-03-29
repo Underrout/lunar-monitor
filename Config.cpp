@@ -75,12 +75,12 @@ Config::Config(const fs::path& configFilePath)
 		Logger::log_warning(L"Not all required config variables have been set");
 	}
 
-	if (std::get<Set>(configOptions[9]) == Set::No)
+	if (std::get<Set>(configOptions[8]) == Set::No)
 	{
 		Logger::setDefaultLogPath(basePath);
 	}
 
-	if (std::get<Set>(configOptions[10]) == Set::No)
+	if (std::get<Set>(configOptions[9]) == Set::No)
 	{
 		Logger::setDefaultLogLevel();
 	}
@@ -92,10 +92,6 @@ void Config::setConfigVar(const std::string& varName, const std::string& varVal,
 	{
 		levelDirectory = basePath;
 		levelDirectory /= varVal;
-	}
-	else if (varName == mwlFormatOption)
-	{
-		mwlFileFormat = varVal;
 	}
 	else if (varName == flipsPathOption)
 	{
@@ -160,11 +156,6 @@ void Config::setConfigVar(const std::string& varName, const std::string& varVal,
 const fs::path& Config::getLevelDirectory() const
 {
 	return levelDirectory;
-}
-
-const std::string& Config::getMwlFileFormat() const
-{
-	return mwlFileFormat;
 }
 
 const fs::path& Config::getLogFilePath() const
