@@ -207,8 +207,11 @@ void AddExportAllButton(HMODULE hModule)
     TBBUTTON button = { index, IDM_EXPORT_ALL_BTN, (BYTE)(config.has_value() ? TBSTATE_ENABLED : TBSTATE_INDETERMINATE), 
         buttonStyles, { 0 }, 0, (INT_PTR)L"Export map16, all levels, global data and shared palettes for Lunar Helper"};
 
+    TBBUTTON sep = { I_IMAGENONE, 0, 0, BTNS_SEP, { 0 }, 0, 0 };
+
     SendMessage(toolbarHandle, TB_SETMAXTEXTROWS, 0, 0);
     SendMessage(toolbarHandle, TB_INSERTBUTTON, 5, (LPARAM)&button);
+    SendMessage(toolbarHandle, TB_INSERTBUTTON, 5, (LPARAM)&sep);
     SendMessage(toolbarHandle, TB_AUTOSIZE, 0, 0);
 
     lm.getPaths().getMainEditorWindowHandle();
