@@ -1,5 +1,7 @@
 #include <Windows.h>
 #include <detours.h>
+#include <CommCtrl.h>
+#pragma comment (lib, "comctl32")
 
 #include <iostream>
 #include "OnLevelSave.h"
@@ -9,7 +11,10 @@
 
 #include "LMFunctions.h"
 #include "LM.h"
+#include "resource.h"
 #include "Config.h"
+
+constexpr const WORD IDM_EXPORT_ALL_BTN = 0x5BF9;
 
 constexpr const char* CONFIG_FILE_PATH = "lunar-monitor-config.txt";
 
@@ -32,10 +37,21 @@ auto LMSaveCreditsFunction = AddressToFnPtr<saveCreditsFunction>(LM_CREDITS_SAVE
 auto LMSaveTitlescreenFunction = AddressToFnPtr<saveTitlescreenFunction>(LM_TITLESCREEN_SAVE_FUNCTION);
 auto LMSaveSharedPalettesFunction = AddressToFnPtr<saveSharedPalettesFunction>(LM_SHARED_PALETTES_SAVE_FUNCTION);
 
+HWND mainEditorProc;
+
 void DllAttach(HMODULE hModule);
 void DllDetach(HMODULE hModule);
 
 void SetConfig(const fs::path& basePath);
+
+void AddExportAllButton(HMODULE hModule);
+void UpdateExportAllButton();
+
+LRESULT CALLBACK MainEditorReplacementWndProc(
+    HWND hwnd,        // handle to window
+    UINT uMsg,        // message identifier
+    WPARAM wParam,    // first message parameter
+    LPARAM lParam);    // second message parameter;
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved)
 {
@@ -70,6 +86,8 @@ void DllAttach(HMODULE hModule)
     DetourTransactionCommit();
 
     SetConfig(lm.getPaths().getRomDir());
+
+    AddExportAllButton(hModule);
 }
 
 void DllDetach(HMODULE hModule)
@@ -84,6 +102,77 @@ void DllDetach(HMODULE hModule)
     DetourDetach(&(PVOID&)LMSaveTitlescreenFunction, SaveTitlescreenFunction);
     DetourDetach(&(PVOID&)LMSaveSharedPalettesFunction, SaveSharedPalettesFunction);
     DetourTransactionCommit();
+}
+
+LRESULT CALLBACK MainEditorReplacementWndProc(
+    HWND hwnd,        // handle to window
+    UINT uMsg,        // message identifier
+    WPARAM wParam,    // first message parameter
+    LPARAM lParam)    // second message parameter
+{
+    if (uMsg == WM_COMMAND && wParam == IDM_EXPORT_ALL_BTN) {
+        Logger::log_message(L"Export all button pressed, attempting to export all now");
+
+        OnGlobalDataSave::onGlobalDataSave(true, lm, config);
+
+        try {
+            fs::path mwlPath = config.value().getLevelDirectory();
+            const fs::path origPath = fs::path(mwlPath);
+            mwlPath /= "level";
+            fs::path romPath = lm.getPaths().getRomDir();
+            romPath += lm.getPaths().getRomName();
+            lm.getLevelEditor().exportAllMwls(lm.getPaths().getLmExePath(), romPath, mwlPath);
+
+            Logger::log_message(L"Successfully exported all levels to \"%s\"", mwlPath.c_str());
+        }
+        catch (const std::exception& exc)
+        {
+            WhatWide what{ exc };
+            Logger::log_error(L"Export of all mwls failed with exception: \"%s\"", what.what());
+        }
+
+        OnMap16Save::onMap16Save(true, lm, config);
+        OnSharedPalettesSave::onSharedPalettesSave(true, lm, config);
+
+        Logger::log_message(L"Successfully exported all!");
+        return 0;
+    }
+
+    return CallWindowProc((WNDPROC)mainEditorProc, *(lm.getPaths().getMainEditorWindowHandle()), uMsg, wParam, lParam);
+}
+
+void AddExportAllButton(HMODULE hModule)
+{
+    HWND toolbarHandle = *(lm.getPaths().getToolbarHandle());
+
+    DWORD backgroundColor = GetSysColor(COLOR_BTNFACE);
+    COLORMAP colorMap;
+    colorMap.from = RGB(0xFF, 0xFF, 0xFF);
+    colorMap.to = backgroundColor;
+    HBITMAP hbm = CreateMappedBitmap(hModule, IDB_BITMAP1, 0, &colorMap, 1);
+    TBADDBITMAP tb;
+    tb.hInst = NULL;
+    tb.nID = (UINT_PTR)hbm;
+
+    int index = SendMessage(toolbarHandle, TB_ADDBITMAP, 0, (LPARAM)&tb);
+
+    const DWORD buttonStyles = TBSTYLE_AUTOSIZE;
+
+    TBBUTTON button = { index, IDM_EXPORT_ALL_BTN, (BYTE)(config.has_value() ? TBSTATE_ENABLED : TBSTATE_INDETERMINATE), 
+        buttonStyles, { 0 }, 0, (INT_PTR)L"Export map16, all levels, global data and shared palettes for Lunar Helper"};
+
+    SendMessage(toolbarHandle, TB_SETMAXTEXTROWS, 0, 0);
+    SendMessage(toolbarHandle, TB_INSERTBUTTON, 5, (LPARAM)&button);
+    SendMessage(toolbarHandle, TB_AUTOSIZE, 0, 0);
+
+    lm.getPaths().getMainEditorWindowHandle();
+
+    mainEditorProc = (HWND)SetWindowLong(*(lm.getPaths().getMainEditorWindowHandle()), GWL_WNDPROC, (LONG)MainEditorReplacementWndProc);
+}
+
+void UpdateExportAllButton()
+{
+    SendMessage(*(lm.getPaths().getToolbarHandle()), TB_INDETERMINATE, IDM_EXPORT_ALL_BTN, (LPARAM) MAKELONG(!config.has_value(), 0));
 }
 
 BOOL NewRomFunction(DWORD a, DWORD b)
@@ -101,6 +190,8 @@ BOOL NewRomFunction(DWORD a, DWORD b)
 
         fs::current_path(lm.getPaths().getRomDir());
         SetConfig(lm.getPaths().getRomDir());
+
+        UpdateExportAllButton();
 
         Logger::log_message(L"Successfully loaded ROM: \"%s\"", romPath.c_str());
     }

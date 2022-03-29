@@ -15,3 +15,13 @@ const char* Paths::getLmExePath()
 	return reinterpret_cast<const char*>(LM_EXE_PATH);
 }
 
+HWND* Paths::getToolbarHandle()
+{
+	return reinterpret_cast<HWND*>(LM_TOOLBAR_HANDLE);
+}
+
+HWND* Paths::getMainEditorWindowHandle()
+{
+	return reinterpret_cast<HWND*>(LM_MAIN_EDITOR_WINDOW_HANDLE);
+}
+

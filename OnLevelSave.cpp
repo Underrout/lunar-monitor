@@ -17,7 +17,7 @@ void OnLevelSave::onLevelSave(bool succeeded, unsigned int savedLevelNumber, LM&
 void OnLevelSave::onSuccessfulLevelSave(unsigned int savedLevelNumber, LM& lm, const Config& config)
 {
     fs::path mwlPath = config.getLevelDirectory();
-    std::string mwlFileName = config.getMwlFileFormat();
+    std::string mwlFileName = "level #.mwl";
 
     int indexToInsertLvlNum = mwlFileName.find("#");
 
