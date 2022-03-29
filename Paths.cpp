@@ -25,3 +25,7 @@ HWND* Paths::getMainEditorWindowHandle()
 	return reinterpret_cast<HWND*>(LM_MAIN_EDITOR_WINDOW_HANDLE);
 }
 
+HWND* Paths::getMainEditorStatusbarHandle()
+{
+	return reinterpret_cast<HWND*>(LM_MAIN_STATUSBAR_HANDLE);
+}

@@ -16,6 +16,9 @@
 
 constexpr const WORD IDM_EXPORT_ALL_BTN = 0x5BF9;
 
+constexpr const size_t MAIN_EDITOR_STATUS_BAR_PARTS = 2;
+constexpr const size_t SECOND_STATUSBAR_FIELD_WIDTH = 800;
+
 constexpr const char* CONFIG_FILE_PATH = "lunar-monitor-config.txt";
 
 std::optional<Config> config = std::nullopt;
@@ -46,6 +49,7 @@ void SetConfig(const fs::path& basePath);
 
 void AddExportAllButton(HMODULE hModule);
 void UpdateExportAllButton();
+void AddStatusBarField();
 
 LRESULT CALLBACK MainEditorReplacementWndProc(
     HWND hwnd,        // handle to window
@@ -84,6 +88,8 @@ void DllAttach(HMODULE hModule)
     DetourAttach(&(PVOID&)LMSaveTitlescreenFunction, SaveTitlescreenFunction);
     DetourAttach(&(PVOID&)LMSaveSharedPalettesFunction, SaveSharedPalettesFunction);
     DetourTransactionCommit();
+
+    AddStatusBarField();
 
     SetConfig(lm.getPaths().getRomDir());
 
@@ -141,6 +147,17 @@ LRESULT CALLBACK MainEditorReplacementWndProc(
     return CallWindowProc((WNDPROC)mainEditorProc, *(lm.getPaths().getMainEditorWindowHandle()), uMsg, wParam, lParam);
 }
 
+void AddStatusBarField()
+{
+    int parts[MAIN_EDITOR_STATUS_BAR_PARTS + 1];
+    SendMessage(*lm.getPaths().getMainEditorStatusbarHandle(), SB_GETPARTS, MAIN_EDITOR_STATUS_BAR_PARTS, (LPARAM)&parts);
+
+    parts[MAIN_EDITOR_STATUS_BAR_PARTS] = -1;
+    parts[MAIN_EDITOR_STATUS_BAR_PARTS - 1] = SECOND_STATUSBAR_FIELD_WIDTH;
+
+    SendMessage(*lm.getPaths().getMainEditorStatusbarHandle(), SB_SETPARTS, MAIN_EDITOR_STATUS_BAR_PARTS + 1, (LPARAM)&parts);
+}
+
 void AddExportAllButton(HMODULE hModule)
 {
     HWND toolbarHandle = *(lm.getPaths().getToolbarHandle());
@@ -185,7 +202,7 @@ BOOL NewRomFunction(DWORD a, DWORD b)
         fs::path romPath = lm.getPaths().getRomDir();
         romPath += lm.getPaths().getRomName();
 
-        Logger::log_message(L"Successfully switched to other ROM: \"%s\", goodbye", romPath.c_str());
+        Logger::log_message(L"Successfully switched to other ROM: \"%s\"", romPath.c_str());
 
         fs::current_path(lm.getPaths().getRomDir());
         SetConfig(lm.getPaths().getRomDir());
