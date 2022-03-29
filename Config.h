@@ -38,7 +38,7 @@ private:
 	};
 	using OptionTuple = std::tuple<const std::string_view, Optional, Set>;
 	
-	static inline std::array<OptionTuple, 11> configOptions{ {
+	static inline std::array<OptionTuple, 10> configOptions{ {
 		{"level_directory:"sv, Optional::No, Set::No},
 		{"flips_path:"sv, Optional::No, Set::No},
 		{"map16_path:"sv, Optional::No, Set::No},
