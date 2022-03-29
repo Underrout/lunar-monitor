@@ -171,6 +171,7 @@ void AddExportAllButton(HMODULE hModule)
 void UpdateExportAllButton()
 {
     SendMessage(*(lm.getPaths().getToolbarHandle()), TB_INDETERMINATE, IDM_EXPORT_ALL_BTN, (LPARAM) MAKELONG(!config.has_value(), 0));
+    SendMessage(*(lm.getPaths().getToolbarHandle()), TB_ENABLEBUTTON, IDM_EXPORT_ALL_BTN, (LPARAM)MAKELONG(config.has_value(), 0));
 }
 
 BOOL NewRomFunction(DWORD a, DWORD b)
