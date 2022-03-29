@@ -1,5 +1,4 @@
 level_directory: "Levels"
-mwl_file_format: "level #.mwl"
 flips_path: "../Tools/FLIPS/flips.exe"
 map16_path: "Other/all.map16"
 clean_rom_path: "../SMW_clean.smc"

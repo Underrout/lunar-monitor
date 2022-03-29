@@ -77,7 +77,6 @@ same folder as the ROM you're currently editing!
 The contents of the example configuration file lunar-monitor-config.txt are:
 
 level_directory: "Levels"
-mwl_file_format: "level #.mwl"
 flips_path: "../Tools/FLIPS/flips.exe"
 map16_path: "Other/all.map16"
 clean_rom_path: "../SMW_clean.smc"
@@ -99,15 +98,6 @@ I will briefly explain each configuration variable.
 
 `level_directory` specifies the directory levels will be exported to, this should 
 point to the same directory as the `levels` variable from Lunar Helper.
-
-
-# mwl_file_format
-
-`mwl_file_format` specifies the naming for exported level files. The '#' character 
-is a placeholder for the level number. For example, if the `mwl_file_format` is 
-"level #.mwl" and we save level 10A it will be exported as "level 10A.mwl". You 
-should probably leave this unchanged as it's the exact format Lunar Magic will 
-use when exporting levels by default.
 
 
 # flips_path
@@ -152,7 +142,7 @@ Lunar Helper.
 # human_readable_map16_cli_path
 
 `human_readable_map16_cli_path` specifies the path to a Human Readable 
-Map16 Conversion Executable(https://github.com/Underrout/human-readable-map16-cli). 
+Map16 Conversion Executable (https://github.com/Underrout/human-readable-map16-cli). 
 This value is optional, if it is present, this executable will be used to convert the 
 map16 file exported to `map16_path` into a human readable text format. These text files 
 will be output into a directory with the same name as the .map16 file, but with 
@@ -221,6 +211,12 @@ the specified directories.
 You can use this Lunar Magic executable as you would any other program, you can make 
 shortcuts to it, pin it to your taskbar, create a file association for it, etc. and 
 Lunar Monitor should still work correctly.
+
+You should also see a new "Export All" button next to Lunar Magic's normal save button 
+in the main level editor. If it's not there, something's wrong and Lunar Monitor is 
+not getting injected at all. If it's greyed out that means Lunar Monitor is injected, 
+but there is either no config file in the current ROM's directory or the config file 
+was invalid.
 
 If it doesn't seem to be working, please double check that:
 - all the paths in your lunar-monitor-config.txt are correct
