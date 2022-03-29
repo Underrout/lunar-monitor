@@ -14,7 +14,7 @@ class OnMap16Save
 {
 public:
 	static void onMap16Save(bool succeeded, LM& lm, const std::optional<const Config>& config);
+	static bool onSuccessfulMap16Save(LM& lm, const Config& config);
 private:
-	static void onSuccessfulMap16Save(LM& lm, const Config& config);
 	static void onFailedMap16Save(LM& lm);
 };

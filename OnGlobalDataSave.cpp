@@ -17,17 +17,22 @@ void OnGlobalDataSave::onGlobalDataSave(bool succeeded, LM& lm, const std::optio
 void OnGlobalDataSave::onSuccessfulGlobalDataSave(LM& lm, const Config& config)
 {
 	try {
-		fs::path romPath = lm.getPaths().getRomDir();
-		romPath += lm.getPaths().getRomName();
-
-		createBpsPatch(romPath, config.getCleanRomPath(), config.getGlobalDataPath(), config.getFlipsPath());
-		Logger::log_message(L"Successfully exported global data to \"%s\"", config.getGlobalDataPath().c_str());
+		exportBps(lm, config);
 	}
 	catch (const std::exception& exc)
 	{
 		WhatWide what{ exc };
 		Logger::log_error(L"Global data export failed with exception: \"%s\"", what.what());
 	}
+}
+
+void OnGlobalDataSave::exportBps(LM& lm, const Config& config)
+{
+	fs::path romPath = lm.getPaths().getRomDir();
+	romPath += lm.getPaths().getRomName();
+
+	createBpsPatch(romPath, config.getCleanRomPath(), config.getGlobalDataPath(), config.getFlipsPath());
+	Logger::log_message(L"Successfully exported global data to \"%s\"", config.getGlobalDataPath().c_str());
 }
 
 void OnGlobalDataSave::onFailedGlobalDataSave(LM& lm)

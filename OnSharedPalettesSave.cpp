@@ -26,7 +26,7 @@ void OnSharedPalettesSave::onSuccessfulSharedPalettesSave(LM& lm, const Config& 
 	catch (const std::runtime_error& err)
 	{
 		WhatWide what{ err };
-		Logger::log_error(L"Exporting shared palettes failed with exception: \"%s\"", what.what());
+		Logger::log_error(L"Shared palettes export failed with exception: \"%s\"", what.what());
 	}
 }
 

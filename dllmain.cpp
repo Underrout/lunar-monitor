@@ -119,7 +119,16 @@ LRESULT CALLBACK MainEditorReplacementWndProc(
     if (uMsg == WM_COMMAND && wParam == IDM_EXPORT_ALL_BTN) {
         Logger::log_message(L"Export all button pressed, attempting to export all now");
 
-        OnGlobalDataSave::onGlobalDataSave(true, lm, config);
+        try {
+            OnGlobalDataSave::exportBps(lm, config.value());
+        }
+        catch (const std::exception& exc)
+        {
+            WhatWide what{ exc };
+            Logger::log_error(L"Full export failed: Global data export failed with exception: \"%s\"", what.what());
+
+            return CallWindowProc((WNDPROC)mainEditorProc, *lm.getPaths().getMainEditorWindowHandle(), uMsg, wParam, lParam);
+        }
 
         try {
             fs::path mwlPath = config.value().getLevelDirectory();
@@ -129,22 +138,42 @@ LRESULT CALLBACK MainEditorReplacementWndProc(
             romPath += lm.getPaths().getRomName();
             lm.getLevelEditor().exportAllMwls(lm.getPaths().getLmExePath(), romPath, mwlPath);
 
-            Logger::log_message(L"Successfully exported all levels to \"%s\"", mwlPath.c_str());
+            Logger::log_message(L"Successfully exported all mwls to \"%s\"", mwlPath.c_str());
         }
         catch (const std::exception& exc)
         {
             WhatWide what{ exc };
-            Logger::log_error(L"Export of all mwls failed with exception: \"%s\"", what.what());
+            Logger::log_error(L"Full export failed: Export of all mwls failed with exception: \"%s\"", what.what());
+
+            return CallWindowProc((WNDPROC)mainEditorProc, *lm.getPaths().getMainEditorWindowHandle(), uMsg, wParam, lParam);
         }
 
-        OnMap16Save::onMap16Save(true, lm, config);
-        OnSharedPalettesSave::onSharedPalettesSave(true, lm, config);
+        if (!OnMap16Save::onSuccessfulMap16Save(lm, config.value()))
+        {
+            Logger::log_error(L"Full export failed: Map16 export failed, check log for details");
+            return CallWindowProc((WNDPROC)mainEditorProc, *lm.getPaths().getMainEditorWindowHandle(), uMsg, wParam, lParam);
+        }
+
+        try {
+            fs::path romPath = lm.getPaths().getRomDir();
+            romPath += lm.getPaths().getRomName();
+
+            OnSharedPalettesSave::exportSharedPalettes(romPath, config.value().getSharedPalettesPath(), lm.getPaths().getLmExePath());
+
+            Logger::log_message(L"Successfully exported shared palettes to \"%s\"", config.value().getSharedPalettesPath().c_str());
+        }
+        catch (const std::runtime_error& err)
+        {
+            WhatWide what{ err };
+            Logger::log_error(L"Full export failed: Shared palettes export failed with exception: \"%s\"", what.what());
+
+            return CallWindowProc((WNDPROC)mainEditorProc, *lm.getPaths().getMainEditorWindowHandle(), uMsg, wParam, lParam);
+        }
 
         Logger::log_message(L"Successfully exported all!");
-        return 0;
     }
 
-    return CallWindowProc((WNDPROC)mainEditorProc, *(lm.getPaths().getMainEditorWindowHandle()), uMsg, wParam, lParam);
+    return CallWindowProc((WNDPROC)mainEditorProc, *lm.getPaths().getMainEditorWindowHandle(), uMsg, wParam, lParam);
 }
 
 void AddStatusBarField()
@@ -202,14 +231,12 @@ BOOL NewRomFunction(DWORD a, DWORD b)
         fs::path romPath = lm.getPaths().getRomDir();
         romPath += lm.getPaths().getRomName();
 
-        Logger::log_message(L"Successfully switched to other ROM: \"%s\"", romPath.c_str());
+        Logger::log_message(L"Successfully loaded ROM: \"%s\"", romPath.c_str());
 
         fs::current_path(lm.getPaths().getRomDir());
         SetConfig(lm.getPaths().getRomDir());
 
         UpdateExportAllButton();
-
-        Logger::log_message(L"Successfully loaded ROM: \"%s\"", romPath.c_str());
     }
     else
     {
