@@ -8,6 +8,7 @@ constexpr uintptr_t LM_CURR_ROM_PATH = 0x7b5ff8;
 constexpr uintptr_t LM_EXE_PATH = 0x592438;
 constexpr uintptr_t LM_TOOLBAR_HANDLE = 0xDAFDC8;
 constexpr uintptr_t LM_MAIN_EDITOR_WINDOW_HANDLE = 0x8B57F8;
+constexpr uintptr_t LM_MAIN_STATUSBAR_HANDLE = 0xDAFDBC;
 
 class Paths
 {
@@ -17,4 +18,5 @@ public:
 	static const char* getLmExePath();
 	static HWND* getToolbarHandle();
 	static HWND* getMainEditorWindowHandle();
+	static HWND* getMainEditorStatusbarHandle();
 };

@@ -1,6 +1,11 @@
 #include "Logger.h"
 #define TIMED_LOGGER_IMPL 0
 
+#include "Paths.h"
+#include <Windows.h>
+#include <CommCtrl.h>
+#pragma comment (lib, "comctl32")
+
 #include <cstdarg>
 #include <vector>
 #include <string>
@@ -238,6 +243,9 @@ namespace Logger {
 #if TIMED_LOGGER_IMPL
 				std::lock_guard lock{ m_logs_mutex };
 #endif
+				const std::wstring s = stream.str();
+				const wchar_t* w = s.c_str();
+				SendMessage((HWND)*((HWND*)LM_MAIN_STATUSBAR_HANDLE), SB_SETTEXT, MAKEWORD(2, 0), (LPARAM)w);
 				m_logs.push_back(stream.str());
 #ifdef _DEBUG
 				m_debug_console.WriteToConsole(severity, m_logs.back().c_str(), m_logs.back().size());
