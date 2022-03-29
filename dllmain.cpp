@@ -101,7 +101,6 @@ void DllDetach(HMODULE hModule)
     DetourDetach(&(PVOID&)LMSaveCreditsFunction, SaveCreditsFunction);
     DetourDetach(&(PVOID&)LMSaveTitlescreenFunction, SaveTitlescreenFunction);
     DetourDetach(&(PVOID&)LMSaveSharedPalettesFunction, SaveSharedPalettesFunction);
-    DetourDetach(&(PVOID&)mainEditorProc, MainEditorReplacementWndProc);
     DetourTransactionCommit();
 }
 
@@ -167,12 +166,6 @@ void AddExportAllButton(HMODULE hModule)
     SendMessage(toolbarHandle, TB_AUTOSIZE, 0, 0);
 
     mainEditorProc = (HWND)SetWindowLong(*(lm.getPaths().getMainEditorWindowHandle()), GWL_WNDPROC, (LONG)MainEditorReplacementWndProc);
-
-    DisableThreadLibraryCalls(hModule);
-    DetourTransactionBegin();
-    DetourUpdateThread(GetCurrentThread());
-    DetourAttach(&(PVOID&)mainEditorProc, MainEditorReplacementWndProc);
-    DetourTransactionCommit();
 }
 
 void UpdateExportAllButton()
