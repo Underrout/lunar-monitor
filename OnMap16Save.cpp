@@ -12,14 +12,15 @@ void OnMap16Save::onMap16Save(bool succeeded, LM& lm, const std::optional<const 
     }
 }
 
-void OnMap16Save::onSuccessfulMap16Save(LM& lm, const Config& config)
+bool OnMap16Save::onSuccessfulMap16Save(LM& lm, const Config& config)
 {
     fs::path romPath = lm.getPaths().getRomDir();
     romPath += lm.getPaths().getRomName();
 
     if (lm.getLevelEditor().exportMap16(config.getMap16Path()))
     {
-        if (config.getHumanReadableMap16ExecutablePath().has_value()) {
+        if (config.getHumanReadableMap16ExecutablePath().has_value()) 
+		{
 			fs::path export_path;
 			if (config.getHumanReadableMap16DirectoryPath().has_value()) {
 				export_path = config.getHumanReadableMap16DirectoryPath().value();
@@ -46,7 +47,7 @@ void OnMap16Save::onSuccessfulMap16Save(LM& lm, const Config& config)
 			if (!CreateProcess(NULL, buf.data(), NULL, NULL, false, CREATE_NO_WINDOW, NULL, NULL, &si, &pi))
 			{
 				Logger::log_error(L"Failed to create human readable map16 executable process");
-				return;
+				return false;
 			}
 
 			WaitForSingleObject(pi.hProcess, INFINITE);
@@ -60,19 +61,19 @@ void OnMap16Save::onSuccessfulMap16Save(LM& lm, const Config& config)
 			
 			if (exitCode == 0) {
 				Logger::log_message(L"Successfully exported and converted map16 to \"%s\"", export_path);
+				return true;
 			}
-			else
-			{
-				Logger::log_error(L"Failed to convert map16 after export");
-			}
+
+			Logger::log_error(L"Failed to convert map16 after export");
+			return false;
 		}
-		else 
-		{
-			Logger::log_message(L"Successfully exported map16 to \"%s\"", config.getMap16Path().c_str());
-		}
+
+		Logger::log_message(L"Successfully exported map16 to \"%s\"", config.getMap16Path().c_str());
+		return true;
     }
-    else
-        Logger::log_error(L"Failed to export map16");
+
+	Logger::log_error(L"Failed to export map16");
+	return false;
 }
 
 void OnMap16Save::onFailedMap16Save(LM& lm)
