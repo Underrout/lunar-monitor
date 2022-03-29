@@ -138,7 +138,7 @@ LRESULT CALLBACK MainEditorReplacementWndProc(
         return 0;
     }
 
-    return ((WNDPROC)mainEditorProc)(hwnd, uMsg, wParam, lParam);
+    return CallWindowProc((WNDPROC)mainEditorProc, *(lm.getPaths().getMainEditorWindowHandle()), uMsg, wParam, lParam);
 }
 
 void AddExportAllButton(HMODULE hModule)
