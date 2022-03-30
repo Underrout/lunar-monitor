@@ -61,7 +61,6 @@ The contents of the example configuration file `lunar-monitor-config.txt` are:
 
 ```
 level_directory: "Levels"
-mwl_file_format: "level #.mwl"
 flips_path: "../Tools/FLIPS/flips.exe"
 map16_path: "Other/all.map16"
 clean_rom_path: "../SMW_clean.smc"
@@ -77,8 +76,6 @@ These should be relatively self explanatory, especially if you have used Lunar H
 All paths are relative to the directory the configuration file and your ROM are in.
 
 `level_directory` specifies the directory levels will be exported to, this should point to the same directory as the `levels` variable from Lunar Helper.
-
-`mwl_file_format` specifies the naming for exported level files. The '#' character is a placeholder for the level number. For example, if the `mwl_file_format` is "level #.mwl" and we save level 10A it will be exported as "level 10A.mwl". You should probably leave this unchanged as it's the exact format Lunar Magic will use when exporting levels by default.
 
 `flips_path` specifies the path to your [FLIPS](https://github.com/Alcaro/Flips) executable. This should be the same as the `flips_path` variable from Lunar Helper. NOTE: I think older FLIPS versions have a bug that sometimes results in them returning error codes despite creating/applying .bps patches correctly so be sure to get an up-to-date version if possible.
 
@@ -103,6 +100,16 @@ The last 2 configuration variables (`log_path` and `log_level`) can be omitted. 
 If you're using git, excluding the log file from version control via your `.gitignore` is probably a good idea.
 
 That should be it. Open your Lunar Magic executable, save a level, map16, shared palettes, etc. and you should see your resources automatically be extracted to the specified directories. You can use this Lunar Magic executable as you would any other program, you can make shortcuts to it, pin it to your taskbar, create a file association for it, etc. and Lunar Monitor should still work correctly.
+
+You should also see a new "Export All" button next to Lunar Magic's normal save button 
+in the main level editor. If it's not there, something's wrong and Lunar Monitor is 
+not getting injected at all. If it's greyed out that means Lunar Monitor is injected, 
+but there is either no config file in the current ROM's directory or the config file 
+was invalid.
+
+You should also see a third plane in the status bar at the bottom of Lunar Magic's main editor window. 
+Lunar Monitor will display anything it writes to the log file in this plane as well to make it easier to tell 
+what it's doing and if it's working.
 
 If it doesn't seem to be working, please double check that:
 - all the paths in your `lunar-monitor-config.txt` are correct
