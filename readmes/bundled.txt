@@ -229,6 +229,10 @@ not getting injected at all. If it's greyed out that means Lunar Monitor is inje
 but there is either no config file in the current ROM's directory or the config file 
 was invalid.
 
+You should also see a third plane in the status bar at the bottom of Lunar Magic's 
+main editor window. Lunar Monitor will display anything it writes to the log file in 
+this plane as well to make it easier to tell what it's doing and if it's working.
+
 If it doesn't seem to be working, please double check that:
 - all the paths in your lunar-monitor-config.txt are correct
 - you're actually using the Lunar Magic executable that's in the same folder as 
