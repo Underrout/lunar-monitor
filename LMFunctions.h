@@ -1,6 +1,9 @@
 #pragma once
 #include <Windows.h>
 
+constexpr uintptr_t LM_RENDER_LEVEL_FUNCTION = 0x53D1D8;
+using renderLevelFunction = void(*)(DWORD a, DWORD b, DWORD c);
+
 constexpr uintptr_t LM_MAP16_SAVE_FUNCTION = 0x441E10;
 using saveMap16Function = BOOL(*)();
 
