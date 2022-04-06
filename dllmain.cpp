@@ -24,6 +24,10 @@ constexpr const char* CONFIG_FILE_PATH = "lunar-monitor-config.txt";
 std::optional<Config> config = std::nullopt;
 LM lm{};
 
+HMODULE g_hModule;
+
+VOID InitFunction(DWORD a, DWORD b, DWORD c);
+
 BOOL SaveLevelFunction(DWORD x);
 BOOL SaveMap16Function();
 BOOL SaveOWFunction();
@@ -31,6 +35,8 @@ BOOL NewRomFunction(DWORD a, DWORD b);
 BOOL SaveCreditsFunction();
 BOOL SaveTitlescreenFunction();
 BOOL SaveSharedPalettesFunction(BOOL x);
+
+auto LMRenderLevelFunction = AddressToFnPtr<renderLevelFunction>(LM_RENDER_LEVEL_FUNCTION);
 
 auto LMSaveLevelFunction = AddressToFnPtr<saveLevelFunction>(LM_LEVEL_SAVE_FUNCTION);
 auto LMSaveMap16Function = AddressToFnPtr<saveMap16Function>(LM_MAP16_SAVE_FUNCTION);
@@ -77,23 +83,13 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 
 void DllAttach(HMODULE hModule)
 {
+    g_hModule = hModule;
+
     DisableThreadLibraryCalls(hModule);
     DetourTransactionBegin();
     DetourUpdateThread(GetCurrentThread());
-    DetourAttach(&(PVOID&)LMSaveLevelFunction, SaveLevelFunction);
-    DetourAttach(&(PVOID&)LMSaveMap16Function, SaveMap16Function);
-    DetourAttach(&(PVOID&)LMSaveOWFunction, SaveOWFunction);
-    DetourAttach(&(PVOID&)LMNewRomFunction, NewRomFunction);
-    DetourAttach(&(PVOID&)LMSaveCreditsFunction, SaveCreditsFunction);
-    DetourAttach(&(PVOID&)LMSaveTitlescreenFunction, SaveTitlescreenFunction);
-    DetourAttach(&(PVOID&)LMSaveSharedPalettesFunction, SaveSharedPalettesFunction);
+    DetourAttach(&(PVOID&)LMRenderLevelFunction, InitFunction);
     DetourTransactionCommit();
-
-    AddStatusBarField();
-
-    SetConfig(lm.getPaths().getRomDir());
-
-    AddExportAllButton(hModule);
 }
 
 void DllDetach(HMODULE hModule)
@@ -108,6 +104,30 @@ void DllDetach(HMODULE hModule)
     DetourDetach(&(PVOID&)LMSaveTitlescreenFunction, SaveTitlescreenFunction);
     DetourDetach(&(PVOID&)LMSaveSharedPalettesFunction, SaveSharedPalettesFunction);
     DetourTransactionCommit();
+}
+
+VOID InitFunction(DWORD a, DWORD b, DWORD c)
+{
+    DetourTransactionBegin();
+    DetourUpdateThread(GetCurrentThread());
+    DetourDetach(&(PVOID&)LMRenderLevelFunction, InitFunction);
+
+    DetourAttach(&(PVOID&)LMSaveLevelFunction, SaveLevelFunction);
+    DetourAttach(&(PVOID&)LMSaveMap16Function, SaveMap16Function);
+    DetourAttach(&(PVOID&)LMSaveOWFunction, SaveOWFunction);
+    DetourAttach(&(PVOID&)LMNewRomFunction, NewRomFunction);
+    DetourAttach(&(PVOID&)LMSaveCreditsFunction, SaveCreditsFunction);
+    DetourAttach(&(PVOID&)LMSaveTitlescreenFunction, SaveTitlescreenFunction);
+    DetourAttach(&(PVOID&)LMSaveSharedPalettesFunction, SaveSharedPalettesFunction);
+    DetourTransactionCommit();
+
+    AddStatusBarField();
+
+    SetConfig(lm.getPaths().getRomDir());
+
+    AddExportAllButton(g_hModule);
+
+    LMRenderLevelFunction(a, b, c);
 }
 
 LRESULT CALLBACK MainEditorReplacementWndProc(
