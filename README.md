@@ -99,7 +99,8 @@ Make sure you specify all the configuration variables correctly or Lunar Monitor
 
 The last 2 configuration variables (`log_path` and `log_level`) can be omitted. If omitted `log_level` will default to Log and `log_path` will default to a file named `lunar_monitor_log.txt` in the same folder as your ROM.
 
-If you're using git, excluding the log file from version control via your `.gitignore` is probably a good idea.
+If you're using git, excluding the log file and the generated `.lunar_helper` from version control via your `.gitignore` is 
+probably a good idea.
 
 That should be it. Open your Lunar Magic executable, save a level, map16, shared palettes, etc. and you should see your resources automatically be extracted to the specified directories. You can use this Lunar Magic executable as you would any other program, you can make shortcuts to it, pin it to your taskbar, create a file association for it, etc. and Lunar Monitor should still work correctly.
 
