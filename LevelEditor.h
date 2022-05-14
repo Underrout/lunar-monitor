@@ -21,4 +21,5 @@ public:
 	static bool exportAllMwls(const fs::path& lmExePath, const fs::path& romPath, 
 		const fs::path& mwlFilePath);
 	static bool exportMap16(const fs::path& map16Path);
+	static void reloadROM(HWND lmRequestWindowHandle, DWORD verificationCode);
 };
