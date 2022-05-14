@@ -26,6 +26,12 @@ LM lm{};
 
 HMODULE g_hModule;
 
+HWND gLmHandle;
+DWORD verificationCode;
+
+HANDLE lunarHelperDirChangeWaiter;
+HANDLE lunarHelperDirChange;
+
 VOID InitFunction(DWORD a, DWORD b, DWORD c);
 
 BOOL SaveLevelFunction(DWORD x);
@@ -57,6 +63,9 @@ void AddExportAllButton(HMODULE hModule);
 void UpdateExportAllButton();
 void AddStatusBarField();
 
+void WatchLunarHelperDirectory();
+void CALLBACK OnLunarHelperDirChange(_In_  PVOID unused, _In_  BOOLEAN TimerOrWaitFired);
+
 LRESULT CALLBACK MainEditorReplacementWndProc(
     HWND hwnd,        // handle to window
     UINT uMsg,        // message identifier
@@ -85,6 +94,36 @@ void DllAttach(HMODULE hModule)
 {
     g_hModule = hModule;
 
+    HANDLE pipe = CreateFile(
+        L"\\\\.\\pipe\\lunar_monitor_pipe",
+        GENERIC_READ, // only need read access
+        FILE_SHARE_READ | FILE_SHARE_WRITE,
+        NULL,
+        OPEN_EXISTING,
+        FILE_ATTRIBUTE_NORMAL,
+        NULL
+    );
+
+    if (pipe != INVALID_HANDLE_VALUE)
+    {
+        ReadFile(
+            pipe,
+            &gLmHandle,
+            sizeof(HWND),
+            NULL,
+            NULL
+        );
+
+        ReadFile(
+            pipe,
+            &verificationCode,
+            sizeof(DWORD),
+            NULL,
+            NULL
+        );
+    }
+    CloseHandle(pipe);
+
     DisableThreadLibraryCalls(hModule);
     DetourTransactionBegin();
     DetourUpdateThread(GetCurrentThread());
@@ -104,6 +143,10 @@ void DllDetach(HMODULE hModule)
     DetourDetach(&(PVOID&)LMSaveTitlescreenFunction, SaveTitlescreenFunction);
     DetourDetach(&(PVOID&)LMSaveSharedPalettesFunction, SaveSharedPalettesFunction);
     DetourTransactionCommit();
+
+    if (lunarHelperDirChangeWaiter != nullptr)
+        UnregisterWait(lunarHelperDirChangeWaiter);
+    CloseHandle(lunarHelperDirChange);
 }
 
 VOID InitFunction(DWORD a, DWORD b, DWORD c)
@@ -126,6 +169,9 @@ VOID InitFunction(DWORD a, DWORD b, DWORD c)
     SetConfig(lm.getPaths().getRomDir());
 
     AddExportAllButton(g_hModule);
+
+    if (config.has_value())
+        WatchLunarHelperDirectory();
 
     LMRenderLevelFunction(a, b, c);
 }
@@ -245,6 +291,41 @@ void UpdateExportAllButton()
     SendMessage(*(lm.getPaths().getToolbarHandle()), TB_ENABLEBUTTON, IDM_EXPORT_ALL_BTN, (LPARAM)MAKELONG(config.has_value(), 0));
 }
 
+void WatchLunarHelperDirectory()
+{
+    if (lunarHelperDirChangeWaiter != nullptr)
+    {
+        UnregisterWait(lunarHelperDirChangeWaiter);
+        lunarHelperDirChangeWaiter = nullptr;
+    }
+    if (lunarHelperDirChange != nullptr)
+        CloseHandle(lunarHelperDirChange);
+
+    fs::path lunarHelperDir = lm.getPaths().getRomDir();
+    lunarHelperDir += ".lunar_helper";
+
+    if (!fs::exists(lunarHelperDir) || !fs::is_directory(lunarHelperDir))
+    {
+        fs::create_directory(lunarHelperDir);
+        SetFileAttributes(lunarHelperDir.c_str(), FILE_ATTRIBUTE_HIDDEN);
+    }
+
+    lunarHelperDirChange = FindFirstChangeNotification(lunarHelperDir.c_str(), false, FILE_NOTIFY_CHANGE_LAST_WRITE);
+
+    if (lunarHelperDirChange != INVALID_HANDLE_VALUE)
+    {
+        RegisterWaitForSingleObject(&lunarHelperDirChangeWaiter, lunarHelperDirChange, &OnLunarHelperDirChange, NULL, INFINITE, WT_EXECUTEONLYONCE);
+    }
+}
+
+void CALLBACK OnLunarHelperDirChange(_In_  PVOID unused, _In_  BOOLEAN TimerOrWaitFired)
+{
+    UnregisterWait(lunarHelperDirChangeWaiter);
+    lunarHelperDirChangeWaiter = nullptr;
+    Logger::log_message(L"Change in Lunar Helper directory detected, reloading ROM...");
+    lm.getLevelEditor().reloadROM(gLmHandle, verificationCode);
+}
+
 BOOL NewRomFunction(DWORD a, DWORD b)
 {
     Logger::log_message(L"Attempting to switch to new ROM");
@@ -262,6 +343,9 @@ BOOL NewRomFunction(DWORD a, DWORD b)
         SetConfig(lm.getPaths().getRomDir());
 
         UpdateExportAllButton();
+
+        if (config.has_value())
+            WatchLunarHelperDirectory();
     }
     else
     {
