@@ -14,6 +14,8 @@
 #include "resource.h"
 #include "Config.h"
 
+#include "BuildResultUpdater.h"
+
 constexpr const WORD IDM_EXPORT_ALL_BTN = 0x5BF9;
 
 constexpr const size_t MAIN_EDITOR_STATUS_BAR_PARTS = 2;
@@ -28,6 +30,8 @@ HMODULE g_hModule;
 
 HWND gLmHandle;
 DWORD verificationCode;
+
+std::optional<std::string> lastRomBuildHash = std::nullopt;
 
 HANDLE lunarHelperDirChangeWaiter;
 HANDLE lunarHelperDirChange;
@@ -146,7 +150,8 @@ void DllDetach(HMODULE hModule)
 
     if (lunarHelperDirChangeWaiter != nullptr)
         UnregisterWait(lunarHelperDirChangeWaiter);
-    CloseHandle(lunarHelperDirChange);
+    if (lunarHelperDirChange != nullptr)
+        FindCloseChangeNotification(lunarHelperDirChange);
 }
 
 VOID InitFunction(DWORD a, DWORD b, DWORD c)
@@ -299,7 +304,7 @@ void WatchLunarHelperDirectory()
         lunarHelperDirChangeWaiter = nullptr;
     }
     if (lunarHelperDirChange != nullptr)
-        CloseHandle(lunarHelperDirChange);
+        FindCloseChangeNotification(lunarHelperDirChange);
 
     fs::path lunarHelperDir = lm.getPaths().getRomDir();
     lunarHelperDir += ".lunar_helper";
@@ -308,6 +313,26 @@ void WatchLunarHelperDirectory()
     {
         fs::create_directory(lunarHelperDir);
         SetFileAttributes(lunarHelperDir.c_str(), FILE_ATTRIBUTE_HIDDEN);
+    }
+    else
+    {
+        std::optional<json> buildReport = BuildResultUpdater::readInJson();
+
+        if (buildReport.has_value())
+        {
+            try
+            {
+                lastRomBuildHash = buildReport.value()["rom_hash"].dump();
+            }
+            catch (const json::exception&)
+            {
+                lastRomBuildHash = std::nullopt;
+            }
+        }
+        else
+        {
+            lastRomBuildHash = std::nullopt;
+        }
     }
 
     lunarHelperDirChange = FindFirstChangeNotification(lunarHelperDir.c_str(), false, FILE_NOTIFY_CHANGE_LAST_WRITE);
@@ -320,10 +345,36 @@ void WatchLunarHelperDirectory()
 
 void CALLBACK OnLunarHelperDirChange(_In_  PVOID unused, _In_  BOOLEAN TimerOrWaitFired)
 {
+    std::optional<json> buildReport = BuildResultUpdater::readInJson();
+
     UnregisterWait(lunarHelperDirChangeWaiter);
     lunarHelperDirChangeWaiter = nullptr;
-    Logger::log_message(L"Change in Lunar Helper directory detected, reloading ROM...");
-    lm.getLevelEditor().reloadROM(gLmHandle, verificationCode);
+
+    if (buildReport.has_value())
+    {
+        try
+        {
+            std::string newHash = buildReport.value()["rom_hash"].dump();
+
+            if (!lastRomBuildHash.has_value() || newHash != lastRomBuildHash.value())
+            {
+                FindCloseChangeNotification(lunarHelperDirChange);
+                lunarHelperDirChange = nullptr;
+                lastRomBuildHash = newHash;
+                Logger::log_message(L"Change in Lunar Helper directory detected, reloading ROM...");
+                lm.getLevelEditor().reloadROM(gLmHandle, verificationCode);
+                return;
+            }
+        }
+        catch (const json::exception&)
+        {
+            // pass
+        }
+    }
+
+    RegisterWaitForSingleObject(&lunarHelperDirChangeWaiter, lunarHelperDirChange, &OnLunarHelperDirChange, NULL, INFINITE, WT_EXECUTEONLYONCE);
+
+    FindNextChangeNotification(lunarHelperDirChange);
 }
 
 BOOL NewRomFunction(DWORD a, DWORD b)

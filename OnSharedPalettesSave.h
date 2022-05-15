@@ -5,6 +5,8 @@
 #include <filesystem>
 #include <optional>
 
+#include "BuildResultUpdater.h"
+
 namespace fs = std::filesystem;
 
 class OnSharedPalettesSave

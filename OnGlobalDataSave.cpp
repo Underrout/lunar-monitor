@@ -33,6 +33,11 @@ void OnGlobalDataSave::exportBps(LM& lm, const Config& config)
 
 	createBpsPatch(romPath, config.getCleanRomPath(), config.getGlobalDataPath(), config.getFlipsPath());
 	Logger::log_message(L"Successfully exported global data to \"%s\"", config.getGlobalDataPath().c_str());
+
+	if (BuildResultUpdater::updateResourceEntry("global_data", config.getGlobalDataPath()))
+	{
+		Logger::log_message(L"Successfully updated build report entry for global data");
+	}
 }
 
 void OnGlobalDataSave::onFailedGlobalDataSave(LM& lm)

@@ -90,7 +90,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>.\Detours\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\JSON\single_include\nlohmann;.\Detours\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -110,7 +110,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>.\Detours\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\JSON\single_include\nlohmann;.\Detours\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -160,11 +160,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="BuildResultUpdater.h" />
     <ClInclude Include="Config.h" />
     <ClInclude Include="LevelEditor.h" />
     <ClInclude Include="LM.h" />
     <ClInclude Include="LMFunctions.h" />
     <ClInclude Include="Logger.h" />
+    <ClInclude Include="md5.h" />
     <ClInclude Include="OnGlobalDataSave.h" />
     <ClInclude Include="OnLevelSave.h" />
     <ClInclude Include="OnMap16Save.h" />
@@ -173,11 +175,13 @@
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="BuildResultUpdater.cpp" />
     <ClCompile Include="Config.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="LevelEditor.cpp" />
     <ClCompile Include="LM.cpp" />
     <ClCompile Include="Logger.cpp" />
+    <ClCompile Include="md5.cpp" />
     <ClCompile Include="OnGlobalDataSave.cpp" />
     <ClCompile Include="OnLevelSave.cpp" />
     <ClCompile Include="OnMap16Save.cpp" />

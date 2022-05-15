@@ -2,6 +2,7 @@
 
 #include "LM.h"
 #include "Config.h"
+#include "BuildResultUpdater.h"
 
 #include <filesystem>
 #include <optional>

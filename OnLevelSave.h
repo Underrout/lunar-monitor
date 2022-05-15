@@ -1,6 +1,8 @@
 #pragma once
 
 #include "LM.h"
+#include "BuildResultUpdater.h"
+
 #include "Config.h"
 #include <filesystem>
 #include <optional>
