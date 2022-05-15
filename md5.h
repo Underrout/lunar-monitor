@@ -38,6 +38,7 @@ documentation and/or software.
 #include <filesystem>
 namespace fs = std::filesystem;
 #include <iostream>
+#include <optional>
 
 
 // a small class for calculating MD5 hashes of strings or byte arrays
@@ -92,6 +93,7 @@ private:
 };
 
 std::string md5Folder(const fs::path rootPath);
-std::string md5(const std::string str);
+std::string md5File(const fs::path path);
+std::optional<std::string> md5IfExists(const fs::path path);
 
 #endif

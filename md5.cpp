@@ -357,9 +357,16 @@ std::ostream& operator<<(std::ostream& out, MD5 md5)
 
 //////////////////////////////
 
-std::string md5(const std::string str)
+std::string md5File(const fs::path path)
 {
-    MD5 md5 = MD5(str);
+    std::ifstream input(path, std::ios::binary);
+    std::string bytes(
+        (std::istreambuf_iterator<char>(input)),
+        (std::istreambuf_iterator<char>())
+    );
+    input.close();
+
+    MD5 md5 = MD5(bytes);
 
     return md5.hexdigest();
 }
@@ -412,4 +419,14 @@ std::string md5Folder(const fs::path rootPath)
     md5.finalize();
 
     return md5.hexdigest();
+}
+
+std::optional<std::string> md5IfExists(const fs::path path)
+{
+    if (fs::exists(path))
+    {
+        return fs::is_directory(path) ? md5Folder(path) : md5File(path);
+    }
+
+    return std::nullopt;
 }

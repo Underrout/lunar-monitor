@@ -87,7 +87,16 @@ bool LevelEditor::exportAllMwls(const fs::path& lmExePath, const fs::path& romPa
 	CloseHandle(pi.hProcess);
 	CloseHandle(pi.hThread);
 
-	return exitCode == 0;
+	if (exitCode != 0)
+	{
+		return false;
+	}
+
+	const fs::path rootPath = romPath.parent_path();
+
+	BuildResultUpdater::updateAllLevelEntries(rootPath, mwlFilePath.parent_path());
+
+	return true;
 }
 
 bool LevelEditor::exportMap16(const fs::path& map16Path)

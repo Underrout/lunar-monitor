@@ -22,6 +22,11 @@ void OnSharedPalettesSave::onSuccessfulSharedPalettesSave(LM& lm, const Config& 
 
 		exportSharedPalettes(romPath, config.getSharedPalettesPath(), lm.getPaths().getLmExePath());
 		Logger::log_message(L"Successfully exported shared palettes to \"%s\"", config.getSharedPalettesPath().c_str());
+
+		if (BuildResultUpdater::updateResourceEntry("shared_palettes", config.getSharedPalettesPath()))
+		{
+			Logger::log_message(L"Successfully updated build report entry for shared palettes");
+		}
 	}
 	catch (const std::runtime_error& err)
 	{

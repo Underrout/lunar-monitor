@@ -19,9 +19,9 @@ bool OnMap16Save::onSuccessfulMap16Save(LM& lm, const Config& config)
 
     if (lm.getLevelEditor().exportMap16(config.getMap16Path()))
     {
+		fs::path export_path;
         if (config.getHumanReadableMap16ExecutablePath().has_value()) 
 		{
-			fs::path export_path;
 			if (config.getHumanReadableMap16DirectoryPath().has_value()) {
 				export_path = config.getHumanReadableMap16DirectoryPath().value();
 			} else {
@@ -61,6 +61,12 @@ bool OnMap16Save::onSuccessfulMap16Save(LM& lm, const Config& config)
 			
 			if (exitCode == 0) {
 				Logger::log_message(L"Successfully exported and converted map16 to \"%s\"", export_path);
+
+				if (BuildResultUpdater::updateResourceEntry("map16", export_path))
+				{
+					Logger::log_message(L"Successfully updated build report entry for map16");
+				}
+
 				return true;
 			}
 
@@ -69,6 +75,12 @@ bool OnMap16Save::onSuccessfulMap16Save(LM& lm, const Config& config)
 		}
 
 		Logger::log_message(L"Successfully exported map16 to \"%s\"", config.getMap16Path().c_str());
+
+		if (BuildResultUpdater::updateResourceEntry("map16", export_path))
+		{
+			Logger::log_message(L"Successfully updated build report entry for map16");
+		}
+
 		return true;
     }
 
