@@ -31,7 +31,7 @@ HMODULE g_hModule;
 HWND gLmHandle;
 DWORD verificationCode;
 
-std::optional<std::string> lastRomBuildHash = std::nullopt;
+std::optional<std::string> lastRomBuildTime = std::nullopt;
 
 HANDLE lunarHelperDirChangeWaiter;
 HANDLE lunarHelperDirChange;
@@ -320,16 +320,16 @@ void WatchLunarHelperDirectory()
         {
             try
             {
-                lastRomBuildHash = buildReport.value()["rom_hash"].dump();
+                lastRomBuildTime = buildReport.value()["build_time"].dump();
             }
             catch (const json::exception&)
             {
-                lastRomBuildHash = std::nullopt;
+                lastRomBuildTime = std::nullopt;
             }
         }
         else
         {
-            lastRomBuildHash = std::nullopt;
+            lastRomBuildTime = std::nullopt;
         }
     }
 
@@ -352,13 +352,13 @@ void CALLBACK OnLunarHelperDirChange(_In_  PVOID unused, _In_  BOOLEAN TimerOrWa
     {
         try
         {
-            std::string newHash = buildReport.value()["rom_hash"].dump();
+            std::string newHash = buildReport.value()["build_time"].dump();
 
-            if (!lastRomBuildHash.has_value() || newHash != lastRomBuildHash.value())
+            if (!lastRomBuildTime.has_value() || newHash != lastRomBuildTime.value())
             {
                 FindCloseChangeNotification(lunarHelperDirChange);
                 lunarHelperDirChange = nullptr;
-                lastRomBuildHash = newHash;
+                lastRomBuildTime = newHash;
                 Logger::log_message(L"Change in Lunar Helper directory detected, reloading ROM...");
                 lm.getLevelEditor().reloadROM(gLmHandle, verificationCode);
                 return;
