@@ -37,6 +37,10 @@ Currently not planning on fixing this because I have no easy way to tell whether
 
 It's possible operating systems and/or antivirus software may flag this as malware since DLL injection is sometimes used by malicious software. If you are concerned about this, feel free to look through the source code, which is completely public, and build the binaries from it yourself instead of using binaries I provide directly (which, to be clear, are built from the exact same source code and only provided for convenience).
 
+Current list of antiviruses known to potentially stop Lunar Monitor from working:
+- Vipre
+- McAfee
+
 Lunar Monitor will very likely **not** work with older or future Lunar Magic versions, since addresses may move around. The Lunar Magic versions I worked off of and tested with are 3.30 and 3.31.
 
 ## Building
