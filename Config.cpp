@@ -37,6 +37,9 @@ Config::Config(const fs::path& configFilePath)
 		if (currLine.substr(0, 2) == "--")
 			continue;
 
+		if (std::all_of(currLine.begin(), currLine.end(), [=](const auto &c){ return std::isspace(c); }))
+			continue;
+
 		auto it = std::find_if(configOptions.begin(), configOptions.end(), [&currLine](const OptionTuple& option_tpl) {
 			const auto& option = std::get<const std::string_view>(option_tpl);
 			return currLine.compare(0, option.size(), option) == 0;
