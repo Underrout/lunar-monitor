@@ -40,6 +40,7 @@ It's possible operating systems and/or antivirus software may flag this as malwa
 Current list of antiviruses known to potentially stop Lunar Monitor from working:
 - Vipre
 - McAfee
+- Avast
 
 Lunar Monitor will very likely **not** work with older or future Lunar Magic versions, since addresses may move around. The Lunar Magic versions I worked off of and tested with are 3.30 and 3.31.
 
