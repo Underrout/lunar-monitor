@@ -36,7 +36,7 @@ std::optional<std::string> lastRomBuildTime = std::nullopt;
 HANDLE lunarHelperDirChangeWaiter;
 HANDLE lunarHelperDirChange;
 
-VOID InitFunction(DWORD a, DWORD b, DWORD c);
+VOID InitFunction(DWORD a);
 
 BOOL SaveLevelFunction(DWORD x, DWORD y);
 BOOL SaveMap16Function();
@@ -154,7 +154,7 @@ void DllDetach(HMODULE hModule)
         FindCloseChangeNotification(lunarHelperDirChange);
 }
 
-VOID InitFunction(DWORD a, DWORD b, DWORD c)
+VOID InitFunction(DWORD a)
 {
     DetourTransactionBegin();
     DetourUpdateThread(GetCurrentThread());
@@ -178,7 +178,8 @@ VOID InitFunction(DWORD a, DWORD b, DWORD c)
     if (config.has_value())
         WatchLunarHelperDirectory();
 
-    LMRenderLevelFunction(a, b, c);
+    // LMRenderLevelFunction(a);  // apparently I can't call this without raising an access violation but 
+                                  // it seems like not calling it is also fine for some reason ¯\_(-u-)_/¯
 }
 
 LRESULT CALLBACK MainEditorReplacementWndProc(
@@ -517,6 +518,7 @@ BOOL SaveSharedPalettesFunction(BOOL x)
         mov eax,esi
         push x
         call LMSaveSharedPalettesFunction
+        add esp,4
         mov succeeded,eax
     }
 
