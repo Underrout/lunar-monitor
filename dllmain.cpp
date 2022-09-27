@@ -16,6 +16,9 @@
 
 #include "BuildResultUpdater.h"
 
+constexpr const char* FISH_REPLACEMENT = "   Mario says     TRANS RIGHTS  ";
+constexpr const char* FISH = "I am Naaall, and I love fiiiish!";
+
 constexpr const WORD IDM_EXPORT_ALL_BTN = 0x5BF9;
 
 constexpr const size_t MAIN_EDITOR_STATUS_BAR_PARTS = 2;
@@ -46,6 +49,8 @@ BOOL SaveCreditsFunction();
 BOOL SaveTitlescreenFunction();
 BOOL SaveSharedPalettesFunction(BOOL x);
 
+void WriteCommentFieldFunction(uint32_t a, const char* comment, uint32_t b);
+
 auto LMRenderLevelFunction = AddressToFnPtr<renderLevelFunction>(LM_RENDER_LEVEL_FUNCTION);
 
 auto LMSaveLevelFunction = AddressToFnPtr<saveLevelFunction>(LM_LEVEL_SAVE_FUNCTION);
@@ -55,6 +60,7 @@ auto LMNewRomFunction = AddressToFnPtr<newRomFunction>(LM_NEW_ROM_FUNCTION);
 auto LMSaveCreditsFunction = AddressToFnPtr<saveCreditsFunction>(LM_CREDITS_SAVE_FUNCTION);
 auto LMSaveTitlescreenFunction = AddressToFnPtr<saveTitlescreenFunction>(LM_TITLESCREEN_SAVE_FUNCTION);
 auto LMSaveSharedPalettesFunction = AddressToFnPtr<saveSharedPalettesFunction>(LM_SHARED_PALETTES_SAVE_FUNCTION);
+auto LMWritecommentFunction = AddressToFnPtr<comment_field_write_function>(LM_COMMENT_FIELD_WRITE_FUNCTION);
 
 HWND mainEditorProc;
 
@@ -146,6 +152,7 @@ void DllDetach(HMODULE hModule)
     DetourDetach(&(PVOID&)LMSaveCreditsFunction, SaveCreditsFunction);
     DetourDetach(&(PVOID&)LMSaveTitlescreenFunction, SaveTitlescreenFunction);
     DetourDetach(&(PVOID&)LMSaveSharedPalettesFunction, SaveSharedPalettesFunction);
+    DetourDetach(&(PVOID&)LMWritecommentFunction, WriteCommentFieldFunction);
     DetourTransactionCommit();
 
     if (lunarHelperDirChangeWaiter != nullptr)
@@ -167,6 +174,7 @@ VOID InitFunction(DWORD a, DWORD b, DWORD c)
     DetourAttach(&(PVOID&)LMSaveCreditsFunction, SaveCreditsFunction);
     DetourAttach(&(PVOID&)LMSaveTitlescreenFunction, SaveTitlescreenFunction);
     DetourAttach(&(PVOID&)LMSaveSharedPalettesFunction, SaveSharedPalettesFunction);
+    DetourAttach(&(PVOID&)LMWritecommentFunction, WriteCommentFieldFunction);
     DetourTransactionCommit();
 
     AddStatusBarField();
@@ -286,6 +294,17 @@ void AddExportAllButton(HMODULE hModule)
     SendMessage(toolbarHandle, TB_AUTOSIZE, 0, 0);
 
     mainEditorProc = (HWND)SetWindowLong(*(lm.getPaths().getMainEditorWindowHandle()), GWL_WNDPROC, (LONG)MainEditorReplacementWndProc);
+}
+
+void WriteCommentFieldFunction(uint32_t write_location, const char* comment, uint32_t comment_length)
+{
+    if (config.has_value() && strcmp(comment, FISH) == 0)
+    {
+        LMWritecommentFunction(write_location, FISH_REPLACEMENT, comment_length);
+        return;
+    }
+
+    LMWritecommentFunction(write_location, comment, comment_length);
 }
 
 void UpdateExportAllButton()

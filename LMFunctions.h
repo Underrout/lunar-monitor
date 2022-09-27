@@ -1,5 +1,6 @@
 #pragma once
 #include <Windows.h>
+#include <stdint.h>
 
 constexpr uintptr_t LM_RENDER_LEVEL_FUNCTION = 0x53D1D8;
 using renderLevelFunction = void(*)(DWORD a, DWORD b, DWORD c);
@@ -27,6 +28,9 @@ using saveSharedPalettesFunction = BOOL(*)(BOOL x);
 
 constexpr uintptr_t LM_EXPORT_ALL_MAP16_FUNCTION = 0x4CEF60;
 using export_all_map16_function = BOOL(*)(DWORD x, const char* full_output_path);
+
+constexpr uintptr_t LM_COMMENT_FIELD_WRITE_FUNCTION = 0x5448C0;
+using comment_field_write_function = void(*)(uint32_t a, const char* comment, uint32_t b);
 
 template <typename T>
 constexpr T AddressToFnPtr(const uintptr_t address) {
