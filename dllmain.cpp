@@ -16,9 +16,6 @@
 
 #include "BuildResultUpdater.h"
 
-constexpr const char* FISH_REPLACEMENT = "   Mario says     TRANS RIGHTS  ";
-constexpr const char* FISH = "I am Naaall, and I love fiiiish!";
-
 constexpr const WORD IDM_EXPORT_ALL_BTN = 0x5BF9;
 
 constexpr const size_t MAIN_EDITOR_STATUS_BAR_PARTS = 2;
@@ -79,7 +76,6 @@ void WatchLunarHelperDirectory();
 void CALLBACK OnLunarHelperDirChange(_In_  PVOID unused, _In_  BOOLEAN TimerOrWaitFired);
 
 bool CommentFieldIsAltered();
-bool WriteAlteredCommentToROM();
 
 bool ExportAll(bool confirm_prompt);
 
@@ -212,8 +208,6 @@ VOID InitFunction(DWORD a, DWORD b, DWORD c)
                                   // it seems like not calling it is also fine for some reason ¯\_(-u-)_/¯
 }
 
-constexpr size_t COMMENT_FIELD_SFC_ROM_OFFSET = 0x7F120;
-constexpr size_t COMMENT_FIELD_SMC_ROM_OFFSET = 0x7F320;
 bool CommentFieldIsAltered()
 {
     std::ifstream rom;
@@ -246,33 +240,6 @@ bool CommentFieldIsAltered()
     }
 }
 
-bool WriteAlteredCommentToROM()
-{
-    std::ofstream rom;
-
-    try {
-        auto rom_path = lm.getPaths().getRomPath();
-        rom.open(rom_path, std::ios::binary | std::ios::out | std::ios::in);
-
-        // assumes that if something isn't .smc, it's not headered
-        const size_t comment_pos = rom_path.extension() == ".smc" ? COMMENT_FIELD_SMC_ROM_OFFSET : COMMENT_FIELD_SFC_ROM_OFFSET;
-
-        rom.seekp(comment_pos);
-        rom.write(FISH_REPLACEMENT, 0x20);
-        rom.close();
-        return true;
-    }
-    catch (std::exception)
-    {
-        if (rom.is_open())
-        {
-            rom.close();
-        }
-        Logger::log_error(L"Failed to mark ROM as non-volatile");
-        return false;
-    }
-}
-
 LRESULT CALLBACK MainEditorReplacementWndProc(
     HWND hwnd,        // handle to window
     UINT uMsg,        // message identifier
@@ -286,7 +253,7 @@ LRESULT CALLBACK MainEditorReplacementWndProc(
         bool res = ExportAll(true);
         if (res)
         {
-            WriteAlteredCommentToROM();
+            lm.WriteCommentToRom(FISH_REPLACEMENT);
         }
         else
         {
@@ -674,7 +641,6 @@ void SetConfig(const fs::path& basePath)
         Logger::log_error(L"Uncaught exception while reading config file, error was \"%s\"", what.what());
         config = std::nullopt;
     }
-
 }
 
 BOOL SaveLevelFunction(DWORD x)

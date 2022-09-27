@@ -4,7 +4,10 @@ void OnMap16Save::onMap16Save(bool succeeded, LM& lm, const std::optional<const 
 {
     if (succeeded && config.has_value()) 
     {
-        onSuccessfulMap16Save(lm, config.value());
+		if (!onSuccessfulMap16Save(lm, config.value()))
+		{
+			lm.WriteOriginalCommentToRom();
+		}
     }
     else
     {
