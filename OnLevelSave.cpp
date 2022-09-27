@@ -53,7 +53,10 @@ void OnLevelSave::onSuccessfulLevelSave(unsigned int savedLevelNumber, LM& lm, c
         }
     }
     else
+    {
+        lm.WriteOriginalCommentToRom();
         Logger::log_error(L"Failed to export level");
+    }
 }
 
 void OnLevelSave::onFailedLevelSave(unsigned int savedLevelNumber, LM& lm)

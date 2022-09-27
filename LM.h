@@ -12,4 +12,6 @@ private:
 public:
 	const Paths& getPaths();
 	LevelEditor& getLevelEditor();
+	bool WriteCommentToRom(const char* comment);
+	bool WriteOriginalCommentToRom();
 };
