@@ -49,6 +49,8 @@ BOOL SaveCreditsFunction();
 BOOL SaveTitlescreenFunction();
 BOOL SaveSharedPalettesFunction(BOOL x);
 
+void ShowVolatileResourceExportError();
+
 void WriteCommentFieldFunction(uint32_t a, const char* comment, uint32_t b);
 
 auto LMRenderLevelFunction = AddressToFnPtr<renderLevelFunction>(LM_RENDER_LEVEL_FUNCTION);
@@ -75,6 +77,11 @@ void AddStatusBarField();
 
 void WatchLunarHelperDirectory();
 void CALLBACK OnLunarHelperDirChange(_In_  PVOID unused, _In_  BOOLEAN TimerOrWaitFired);
+
+bool CommentFieldIsAltered();
+bool WriteAlteredCommentToROM();
+
+bool ExportAll(bool confirm_prompt);
 
 LRESULT CALLBACK MainEditorReplacementWndProc(
     HWND hwnd,        // handle to window
@@ -184,9 +191,86 @@ VOID InitFunction(DWORD a, DWORD b, DWORD c)
     AddExportAllButton(g_hModule);
 
     if (config.has_value())
+    {
         WatchLunarHelperDirectory();
 
-    LMRenderLevelFunction(a, b, c);
+        if (fs::exists(lm.getPaths().getRomPath()) && !CommentFieldIsAltered())
+        {
+            Logger::log_message(L"Potential volatile resources in ROM, notifying user");
+            MessageBox(
+                *lm.getPaths().getMainEditorWindowHandle(),
+                (LPCWSTR)L"There may be unexported resources in the ROM you are opening.\nIt is recommended that you "
+                "export these resources by pressing the \"Export All\" button in the toolbar before "
+                "attempting to build with Lunar Helper.",
+                (LPCWSTR)L"Lunar Monitor: Volatile Resources",
+                MB_ICONWARNING
+            );
+        }
+    }
+
+    // LMRenderLevelFunction(a);  // apparently I can't call this without raising an access violation but 
+                                  // it seems like not calling it is also fine for some reason ¯\_(-u-)_/¯
+}
+
+constexpr size_t COMMENT_FIELD_SFC_ROM_OFFSET = 0x7F120;
+constexpr size_t COMMENT_FIELD_SMC_ROM_OFFSET = 0x7F320;
+bool CommentFieldIsAltered()
+{
+    std::ifstream rom;
+    try {
+        auto rom_path = lm.getPaths().getRomPath();
+        rom.open(rom_path, std::ifstream::binary);
+
+        // assumes that if something isn't .smc, it's not headered
+        const size_t comment_pos = rom_path.extension() == ".smc" ? COMMENT_FIELD_SMC_ROM_OFFSET : COMMENT_FIELD_SFC_ROM_OFFSET;
+
+        char comment[0x21];
+
+        rom.seekg(comment_pos);
+        rom.read(comment, 0x20);
+        comment[0x20] = '\0';
+
+        rom.close();
+
+        return strcmp(FISH, comment) != 0;
+    }
+    catch (std::exception)
+    {
+        if (rom.is_open())
+        {
+            rom.close();
+        }
+        // if we can't read from the ROM, return true, if the ROM is missing or broken we 
+        // have bigger issues than preserving its integrity via the comment field
+        return true;
+    }
+}
+
+bool WriteAlteredCommentToROM()
+{
+    std::ofstream rom;
+
+    try {
+        auto rom_path = lm.getPaths().getRomPath();
+        rom.open(rom_path, std::ios::binary | std::ios::out | std::ios::in);
+
+        // assumes that if something isn't .smc, it's not headered
+        const size_t comment_pos = rom_path.extension() == ".smc" ? COMMENT_FIELD_SMC_ROM_OFFSET : COMMENT_FIELD_SFC_ROM_OFFSET;
+
+        rom.seekp(comment_pos);
+        rom.write(FISH_REPLACEMENT, 0x20);
+        rom.close();
+        return true;
+    }
+    catch (std::exception)
+    {
+        if (rom.is_open())
+        {
+            rom.close();
+        }
+        Logger::log_error(L"Failed to mark ROM as non-volatile");
+        return false;
+    }
 }
 
 LRESULT CALLBACK MainEditorReplacementWndProc(
@@ -196,63 +280,137 @@ LRESULT CALLBACK MainEditorReplacementWndProc(
     LPARAM lParam)    // second message parameter
 {
     if (uMsg == WM_COMMAND && wParam == IDM_EXPORT_ALL_BTN) {
-        Logger::log_message(L"Export all button pressed, attempting to export all now");
-
-        try {
-            OnGlobalDataSave::exportBps(lm, config.value());
-        }
-        catch (const std::exception& exc)
+        // export all button pressed, export all and then mark the ROM as having last been 
+        // edited by a lunar monitor injected lunar magic, meaning there should now be no resources
+        // in the ROM that are not exported
+        bool res = ExportAll(true);
+        if (res)
         {
-            WhatWide what{ exc };
-            Logger::log_error(L"Full export failed: Global data export failed with exception: \"%s\"", what.what());
-
-            return CallWindowProc((WNDPROC)mainEditorProc, *lm.getPaths().getMainEditorWindowHandle(), uMsg, wParam, lParam);
+            WriteAlteredCommentToROM();
         }
-
-        try {
-            fs::path mwlPath = config.value().getLevelDirectory();
-            const fs::path origPath = fs::path(mwlPath);
-            mwlPath /= "level";
-            fs::path romPath = lm.getPaths().getRomDir();
-            romPath += lm.getPaths().getRomName();
-            lm.getLevelEditor().exportAllMwls(lm.getPaths().getLmExePath(), romPath, mwlPath);
-
-            Logger::log_message(L"Successfully exported all mwls to \"%s\"", mwlPath.c_str());
-        }
-        catch (const std::exception& exc)
+        else
         {
-            WhatWide what{ exc };
-            Logger::log_error(L"Full export failed: Export of all mwls failed with exception: \"%s\"", what.what());
-
-            return CallWindowProc((WNDPROC)mainEditorProc, *lm.getPaths().getMainEditorWindowHandle(), uMsg, wParam, lParam);
+            if (!CommentFieldIsAltered())
+                ShowVolatileResourceExportError();
         }
-
-        if (!OnMap16Save::onSuccessfulMap16Save(lm, config.value()))
-        {
-            Logger::log_error(L"Full export failed: Map16 export failed, check log for details");
-            return CallWindowProc((WNDPROC)mainEditorProc, *lm.getPaths().getMainEditorWindowHandle(), uMsg, wParam, lParam);
-        }
-
-        try {
-            fs::path romPath = lm.getPaths().getRomDir();
-            romPath += lm.getPaths().getRomName();
-
-            OnSharedPalettesSave::exportSharedPalettes(romPath, config.value().getSharedPalettesPath(), lm.getPaths().getLmExePath());
-
-            Logger::log_message(L"Successfully exported shared palettes to \"%s\"", config.value().getSharedPalettesPath().c_str());
-        }
-        catch (const std::runtime_error& err)
-        {
-            WhatWide what{ err };
-            Logger::log_error(L"Full export failed: Shared palettes export failed with exception: \"%s\"", what.what());
-
-            return CallWindowProc((WNDPROC)mainEditorProc, *lm.getPaths().getMainEditorWindowHandle(), uMsg, wParam, lParam);
-        }
-
-        Logger::log_message(L"Successfully exported all!");
     }
 
     return CallWindowProc((WNDPROC)mainEditorProc, *lm.getPaths().getMainEditorWindowHandle(), uMsg, wParam, lParam);
+}
+
+void ShowVolatileResourceExportError()
+{
+    Logger::log_error(L"Failed to export at least one potentially volatile resource, notifying user");
+    MessageBox(
+        *lm.getPaths().getMainEditorWindowHandle(),
+        (LPCWSTR)L"Failed to export at least one potentially volatile resource, check \"lunar-monitor-log.txt\" for details.\n"
+        "It is HIGHLY recommended that you create a backup of your ROM and do not "
+        "attempt to build with Lunar Helper until you have successfully exported your resources!",
+        (LPCWSTR)L"Lunar Monitor: Failed to Export Volatile Resources",
+        MB_ICONERROR
+    );
+}
+
+bool ExportAll(bool confirm_prompt = false)
+{
+    if (confirm_prompt)
+    {
+        int msgboxID = MessageBox(
+            *lm.getPaths().getMainEditorWindowHandle(),
+            (LPCWSTR)L"Are you sure you want to export all modified levels, map16, global data and shared palettes from the ROM?",
+            (LPCWSTR)L"Lunar Monitor: Export All",
+            MB_ICONWARNING | MB_YESNO | MB_DEFBUTTON1
+        );
+
+        switch (msgboxID)
+        {
+        case IDYES:
+            break;
+        case IDNO:
+            return false;
+        }
+    }
+
+    Logger::log_message(L"Export all button pressed, attempting to export all now");
+
+    try {
+        OnGlobalDataSave::exportBps(lm, config.value());
+    }
+    catch (const std::exception& exc)
+    {
+        WhatWide what{ exc };
+        Logger::log_error(L"Full export failed: Global data export failed with exception: \"%s\"", what.what());
+
+        return false;
+    }
+
+    try {
+        fs::path mwlPath = config.value().getLevelDirectory();
+        const fs::path origPath = fs::path(mwlPath);
+        mwlPath /= "level";
+        fs::path romPath = lm.getPaths().getRomDir();
+        romPath += lm.getPaths().getRomName();
+        lm.getLevelEditor().exportAllMwls(lm.getPaths().getLmExePath(), romPath, mwlPath);
+
+        Logger::log_message(L"Successfully exported all mwls to \"%s\"", mwlPath.c_str());
+    }
+    catch (const std::exception& exc)
+    {
+        WhatWide what{ exc };
+        Logger::log_error(L"Full export failed: Export of all mwls failed with exception: \"%s\"", what.what());
+
+        return false;
+    }
+
+    if (!OnMap16Save::onSuccessfulMap16Save(lm, config.value()))
+    {
+        Logger::log_error(L"Full export failed: Map16 export failed, check log for details");
+        return false;
+    }
+
+    try {
+        fs::path romPath = lm.getPaths().getRomDir();
+        romPath += lm.getPaths().getRomName();
+
+        OnSharedPalettesSave::exportSharedPalettes(romPath, config.value().getSharedPalettesPath(), lm.getPaths().getLmExePath());
+
+        Logger::log_message(L"Successfully exported shared palettes to \"%s\"", config.value().getSharedPalettesPath().c_str());
+    }
+    catch (const std::runtime_error& err)
+    {
+        WhatWide what{ err };
+        Logger::log_error(L"Full export failed: Shared palettes export failed with exception: \"%s\"", what.what());
+
+        return false;
+    }
+
+    Logger::log_message(L"Successfully exported all!");
+
+    if (CommentFieldIsAltered())
+    {
+        MessageBox(
+            *lm.getPaths().getMainEditorWindowHandle(),
+            (LPCWSTR)L"Successfuly exported all resources for Lunar Helper!\n(Hint: "
+            "Using Export All is generally only necessary when you are explicitly prompted to do so, "
+            "Lunar Monitor automatically exports resources when you save them and knows "
+            "to prompt you if there may be unexported resources left over in the ROM!)",
+            (LPCWSTR)L"Lunar Monitor: Successfully Exported All",
+            MB_ICONINFORMATION
+        );
+    }
+    else
+    {
+        // user just exported volatile resources! congratulate them!!
+        MessageBox(
+            *lm.getPaths().getMainEditorWindowHandle(),
+            (LPCWSTR)L"Successfuly exported all resources for Lunar Helper.\n"
+            "You can now safely build your ROM with Lunar Helper!",
+            (LPCWSTR)L"Lunar Monitor: Successfully Exported All",
+            MB_ICONINFORMATION
+        );
+    }
+
+    return true;
 }
 
 void AddStatusBarField()
@@ -284,7 +442,7 @@ void AddExportAllButton(HMODULE hModule)
     const DWORD buttonStyles = TBSTYLE_AUTOSIZE;
 
     TBBUTTON button = { index, IDM_EXPORT_ALL_BTN, (BYTE)(config.has_value() ? TBSTATE_ENABLED : TBSTATE_INDETERMINATE), 
-        buttonStyles, { 0 }, 0, (INT_PTR)L"Export map16, all levels, global data and shared palettes for Lunar Helper"};
+        buttonStyles, { 0 }, 0, (INT_PTR)L"\"Export All\": Export map16, all levels, global data and shared palettes for Lunar Helper"};
 
     TBBUTTON sep = { I_IMAGENONE, 0, 0, BTNS_SEP, { 0 }, 0, 0 };
 
@@ -296,12 +454,40 @@ void AddExportAllButton(HMODULE hModule)
     mainEditorProc = (HWND)SetWindowLong(*(lm.getPaths().getMainEditorWindowHandle()), GWL_WNDPROC, (LONG)MainEditorReplacementWndProc);
 }
 
+void PromptUserToExportUnexportedResources()
+{
+    MessageBox(
+        *lm.getPaths().getMainEditorWindowHandle(),
+        (LPCWSTR)L"There may be unexported resources in this ROM.\nIt is recommended that you "
+        "export these resources by pressing the \"Export All\" button in the toolbar before "
+        "attempting to build with Lunar Helper.",
+        (LPCWSTR)L"Lunar Monitor: Volatile Resources",
+        MB_ICONWARNING
+    );
+}
+
 void WriteCommentFieldFunction(uint32_t write_location, const char* comment, uint32_t comment_length)
 {
-    if (config.has_value() && strcmp(comment, FISH) == 0)
+    if (config.has_value() && strcmp(comment, FISH) == 0 && fs::exists(lm.getPaths().getRomPath()))
     {
-        LMWritecommentFunction(write_location, FISH_REPLACEMENT, comment_length);
-        return;
+        if (CommentFieldIsAltered())
+        {
+            // comment field is still altered, so there should be nothing in the ROM that's unexported,
+            // just keep the comment field altered and return
+            LMWritecommentFunction(write_location, FISH_REPLACEMENT, comment_length);
+            return;
+        }
+        else
+        {
+            // comment field is lunar magic's default, meaning the last lunar magic that has saved to this
+            // ROM was not injected with lunar monitor, there could be unexported resources in the ROM, 
+            // so let's remind the user to export all, to be safe
+            Logger::log_message(L"Potential volatile resources in ROM, notifying user");
+            PromptUserToExportUnexportedResources();
+            // would love to offer them a yes/no prompt for exporting right now, but sadly lunar magic has a 
+            // lock on the rom file during most functions I have hooked, so the export would just fail :/
+            // maybe in the future!
+        }
     }
 
     LMWritecommentFunction(write_location, comment, comment_length);
@@ -413,7 +599,22 @@ BOOL NewRomFunction(DWORD a, DWORD b)
         UpdateExportAllButton();
 
         if (config.has_value())
+        {
             WatchLunarHelperDirectory();
+
+            if (fs::exists(romPath) && !CommentFieldIsAltered())
+            {
+                Logger::log_message(L"Potential volatile resources in ROM, notifying user");
+                MessageBox(
+                    *lm.getPaths().getMainEditorWindowHandle(),
+                    (LPCWSTR)L"There may be unexported resources in the ROM you are opening.\nIt is recommended that you "
+                    "export these resources by pressing the \"Export All\" button in the toolbar before "
+                    "attempting to build with Lunar Helper.",
+                    (LPCWSTR)L"Lunar Monitor: Volatile Resources",
+                    MB_ICONWARNING
+                );
+            }
+        }
     }
     else
     {
