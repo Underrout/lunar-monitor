@@ -30,6 +30,7 @@ void OnSharedPalettesSave::onSuccessfulSharedPalettesSave(LM& lm, const Config& 
 	}
 	catch (const std::runtime_error& err)
 	{
+		lm.WriteOriginalCommentToRom();
 		WhatWide what{ err };
 		Logger::log_error(L"Shared palettes export failed with exception: \"%s\"", what.what());
 	}

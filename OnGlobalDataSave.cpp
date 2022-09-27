@@ -21,6 +21,7 @@ void OnGlobalDataSave::onSuccessfulGlobalDataSave(LM& lm, const Config& config)
 	}
 	catch (const std::exception& exc)
 	{
+		lm.WriteOriginalCommentToRom();
 		WhatWide what{ exc };
 		Logger::log_error(L"Global data export failed with exception: \"%s\"", what.what());
 	}
