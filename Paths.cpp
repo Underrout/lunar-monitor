@@ -15,6 +15,14 @@ const char* Paths::getLmExePath()
 	return reinterpret_cast<const char*>(LM_EXE_PATH);
 }
 
+std::filesystem::path Paths::getRomPath()
+{
+	std::filesystem::path dir = getRomDir();
+	dir += getRomName();
+
+	return dir;
+}
+
 HWND* Paths::getToolbarHandle()
 {
 	return reinterpret_cast<HWND*>(LM_TOOLBAR_HANDLE);
