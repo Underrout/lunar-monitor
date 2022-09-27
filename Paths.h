@@ -1,5 +1,6 @@
 #pragma once
 
+#include <filesystem>
 #include <cstdint>
 #include <Windows.h>
 
@@ -16,6 +17,7 @@ public:
 	static const char* getRomName();
 	static const char* getRomDir();
 	static const char* getLmExePath();
+	static std::filesystem::path getRomPath();
 	static HWND* getToolbarHandle();
 	static HWND* getMainEditorWindowHandle();
 	static HWND* getMainEditorStatusbarHandle();
