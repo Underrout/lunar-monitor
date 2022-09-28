@@ -22,8 +22,7 @@ DISCLAIMER:
 
 NOTE: 
 
-    Currently this tool only works with Lunar Magic 3.30 and 3.31 (there are 
-    two separate versions available).
+    Currently this tool works with Lunar Magic 3.30, 3.31 and 3.32.
 
 
 ## Source Code ##
@@ -44,28 +43,15 @@ well as Lunar Helper.
 
 To set this up you will need 
 
-- lunar-monitor-injector.exe
+- the `lunar_monitor` folder 
 - usertoolbar.txt
 - lunar-monitor-config.txt
-- lunar-monitor.dll
 
-The first three can just be taken from the same directory as this readme. There are 
-two lunar-monitor.dll files included in this zip archive, depending on which Lunar 
-Magic version you are using. If you are using Lunar Magic 3.31, please grab the 
-one from the LM3.31 directory. Likewise, if you are using Lunar Magic 3.30, take 
-the one from the LM3.30 directory. Any other Lunar Magic versions are currently 
-unsupported!
-
-To actually start setup, put 
-
-- lunar-monitor-injector.exe
-- lunar-monitor.dll
-- usertoolbar.txt 
-
-in the same directory as your Lunar Magic executable.
+Take the `lunar_monitor` folder and usertoolbar.txt from this zip and put them
+in the same folder as your Lunar Magic executable.
 
 lunar-monitor-config.txt is an example of a configuration file for Lunar Monitor. 
-You should put a file with this precise name in the same directory as the ROM(s) 
+You should put a file with this precise name in the same folder as the ROM(s) 
 you want to automatically extract resources from. 
 
 You can put as many of these configuration files in as many locations as you want
@@ -192,7 +178,7 @@ for convenience).
 
 Lunar Monitor will very likely not work with older or future Lunar Magic versions, 
 since addresses may move around. The Lunar Magic versions I worked off of and tested 
-with are 3.30 and 3.31.
+with are 3.30, 3.31 and 3.32..
 
 
 ## Finishing Up ##
@@ -225,6 +211,5 @@ this plane as well to make it easier to tell what it's doing and if it's working
 If it doesn't seem to be working, please double check that:
 - all the paths in your lunar-monitor-config.txt are correct
 - you're actually using the Lunar Magic executable that's in the same folder as 
-  lunar-monitor-injector.exe, lunar-monitor.dll and usertoolbar.txt
-- you're using Lunar Magic 3.30 or 3.31 and have the correct version of the .dll for your 
-  Lunar Magic version
+  usertoolbar.txt and the `lunar_monitor` folder
+- you're using Lunar Magic 3.30, 3.31 or 3.32
