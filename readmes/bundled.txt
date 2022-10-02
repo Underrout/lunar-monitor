@@ -22,7 +22,7 @@ DISCLAIMER:
 
 NOTE: 
 
-    Currently this tool works with Lunar Magic 3.30, 3.31 and 3.32.
+    Currently this tool works with Lunar Magic 3.30, 3.31, 3.32 and 3.33.
 
 
 ## Source Code ##
@@ -189,7 +189,7 @@ for convenience).
 
 Lunar Monitor will very likely not work with older or future Lunar Magic versions, 
 since addresses may move around. The Lunar Magic versions I worked off of and tested 
-with are 3.30, 3.31 and 3.32.
+with are 3.30, 3.31, 3.32 and 3.33.
 
 
 ## Finishing Up ##
@@ -223,6 +223,6 @@ If it doesn't seem to be working, please double check that:
 - all the paths in your lunar-monitor-config.txt are correct
 - you're actually using the Lunar Magic executable that's in the same folder as 
   usertoolbar.txt and the `lunar_monitor` folder
-- you're using Lunar Magic 3.30, 3.31 or 3.32
+- you're using Lunar Magic 3.30, 3.31, 3.32 or 3.33
 
 Once you're satisfied, feel free to return to the readme in this zip archive's root directory.
