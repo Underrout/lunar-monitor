@@ -1,6 +1,6 @@
 # Lunar Monitor
 
-**NOTE:** Currently this tool only works with Lunar Magic 3.30 and 3.31 (there are two separate versions available).
+**NOTE:** Currently this tool only works with Lunar Magic 3.30, 3.31, 3.32 and 3.33.
 
 **DISCLAIMER:** I cannot guarantee that using this program will not corrupt your ROM data or export corrupted data. I have tested all functionality and not had any issues but considering I am hijacking a program whose internals I do not fully understand (Lunar Magic) there is always potential for something to go wrong so keep that in mind if you want to use this tool.
 
@@ -41,8 +41,9 @@ Current list of antiviruses known to potentially stop Lunar Monitor from working
 - Vipre
 - McAfee
 - Avast
+- Windows Defender (apparently)
 
-Lunar Monitor will very likely **not** work with older or future Lunar Magic versions, since addresses may move around. The Lunar Magic versions I worked off of and tested with are 3.30 and 3.31.
+Lunar Monitor will very likely **not** work with older or future Lunar Magic versions, since addresses may move around. The Lunar Magic versions I worked off of and tested with are 3.30, 3.31, 3.32 and 3.33.
 
 ## Building
 
@@ -128,7 +129,7 @@ what it's doing and if it's working.
 If it doesn't seem to be working, please double check that:
 - all the paths in your `lunar-monitor-config.txt` are correct
 - you're actually using the Lunar Magic executable that's in the same folder as `lunar-monitor-injector.exe`, `lunar-monitor.dll` and `usertoolbar.txt`
-- you're using Lunar Magic 3.30 or 3.31 and have the correct version of the tool for your Lunar Magic version
+- you're using Lunar Magic 3.30, 3.31, 3.32 or 3.33 and have the correct version of the tool for your Lunar Magic version
 
 If you're certain everything's set up correctly and it's still not working please feel free to [open an issue](https://github.com/Underrout/lunar-monitor/issues/new) and let me know what isn't working as expected.
 
