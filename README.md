@@ -1,3 +1,6 @@
+# This repository is no longer maintained, as it has been merged into [this Lunar Helper fork](https://github.com/Underrout/LunarHelper), please go there to get new versions, thanks!
+
+
 # Lunar Monitor
 
 **NOTE:** Currently this tool only works with Lunar Magic 3.30, 3.31, 3.32 and 3.33.
